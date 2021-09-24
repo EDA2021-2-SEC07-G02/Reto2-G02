@@ -1,4 +1,4 @@
-# Reto 1 - EDA
+# Reto 2 - EDA
 
 ## Hecho por:
 1. Daniel Gomez | 201728920 | df.gomezb@uniandes.edu.co
@@ -6,7 +6,7 @@
 
 
 
-## ISIS1225 - Librerias de soporte
+### ISIS1225 - Librerias de soporte
 
 Este proyecto contiene los Tipos abstractos de datos, estructuras de datos y algoritmos requeridos por el curso ISIS1225-Estructuras de Datos y Algoritmos
 
