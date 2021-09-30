@@ -39,12 +39,63 @@ los mismos.
 
 # Construccion de modelos
 
+def newCatalog():
+    # TODO: Documentación return
+    """
+    Inicializa el catálogo. Se crea dos mapas/indices, una de ellos para guardar a los artistas, 
+    otra para las obras de arte.
+    
+    Parámetros:
+        
+    Retorno:
+        catalog: Catalogo inicializado
+    """
+    catalog = {'artists': None,
+               'artworks': None}
+    
+    #Mapas
+    catalog['artists'] = mp.newMap(15000, #Hay aprox 15k de artistas
+                                   maptype='CHAINING', #elegir si chaining o probing
+                                   loadfactor=4.0,
+                                   comparefunction=compareConsIDArtist)
+    catalog['artworks'] = mp.newMap(150000, #Hay 138150 obras de arte
+                                   maptype='CHAINING',
+                                   loadfactor=4.0,
+                                   comparefunction=compareObjectID)
+    return catalog
+
 # Funciones para agregar informacion al catalogo
 
 # Funciones para creacion de datos
 
 # Funciones de consulta
 
-# Funciones utilizadas para comparar elementos dentro de una lista
+# Funciones utilizadas para comparar elementos dentro de una lista/mapa
+
+def compareConsIDArtist(consIDArtist, entry):
+    """
+    Compara dos ConstituentID de artistas, consIDArtist es un identificador
+    y entry una pareja llave-valor
+    """
+    identry = me.getKey(entry)
+    if (int(consIDArtist) == int(identry)):
+        return 0
+    elif (int(consIDArtist) > int(identry)):
+        return 1
+    else:
+        return -1
+
+def compareObjectID(ObjectID, entry):
+    """
+    Compara dos ObjectID de artworks, ObjectID es un identificador
+    y entry una pareja llave-valor
+    """
+    identry = me.getKey(entry)
+    if (int(ObjectID) == int(identry)):
+        return 0
+    elif (int(ObjectID) > int(identry)):
+        return 1
+    else:
+        return -1
 
 # Funciones de ordenamiento
