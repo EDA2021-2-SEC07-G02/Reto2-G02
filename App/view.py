@@ -24,6 +24,8 @@ import config as cf
 import sys
 import controller
 from DISClib.ADT import list as lt
+from DISClib.ADT import map as mp
+from DISClib.DataStructures import mapentry as me
 assert cf
 
 
@@ -36,8 +38,9 @@ operación solicitada
 
 def printMenu():
     print("Bienvenido")
+    print("0- Salir")
     print("1- Cargar información en el catálogo")
-    print("2- ")
+    print("2- Seleccionar n obras más antiguas para un medio específico")
 
 catalog = None
 
@@ -49,10 +52,22 @@ while True:
     inputs = input('Seleccione una opción para continuar\n')
     if int(inputs[0]) == 1:
         print("Cargando información de los archivos ....")
+        catalog=controller.initCatalog()
+        controller.loadData(catalog)
+        lista_llaves=mp.keySet(catalog["mediums"])
+        print("Tamaño de mapa ",lt.size(lista_llaves))
+        
 
     elif int(inputs[0]) == 2:
+        medio=input("Ingrese el medio: ")
+        n=int(input("Ingrese la cantidad de obras a seleccionar: "))
+        print(controller.obrasMasAntiguas(catalog,medio,n))
+
         pass
 
-    else:
+    # Opción 0: Salir
+    elif int(inputs[0]) == 0:
         sys.exit(0)
+    else:
+        print("Seleccione una opción válida") 
 sys.exit(0)

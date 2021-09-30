@@ -30,6 +30,7 @@ from DISClib.ADT import list as lt
 from DISClib.ADT import map as mp
 from DISClib.DataStructures import mapentry as me
 from DISClib.Algorithms.Sorting import shellsort as sa
+from DISClib.Algorithms.Sorting import mergesort as ms
 assert cf
 
 """
@@ -51,7 +52,8 @@ def newCatalog():
         catalog: Catalogo inicializado
     """
     catalog = {'artists': None,
-               'artworks': None}
+               'artworks': None,
+               'mediums':None}
     
     #Mapas
     catalog['artists'] = mp.newMap(15000, #Hay aprox 15k de artistas
@@ -62,15 +64,97 @@ def newCatalog():
                                    maptype='CHAINING',
                                    loadfactor=4.0,
                                    comparefunction=compareObjectID)
+    catalog['mediums'] = mp.newMap(1000,
+                                   maptype='CHAINING',
+                                   loadfactor=4.0,
+                                   comparefunction=compareMedium)
     return catalog
 
 # Funciones para agregar informacion al catalogo
+
+def addArtist(catalog, artist):
+    """
+    Se agrega el artista entregado por parámetro en la última posición de la lista de artistas del catalogo.
+    Párametros:
+        catalog: catalogo de artistas y obras
+        artist: artista a añadir
+    
+    Se añade el artista en mapa 
+    """
+    mp.put(catalog['artists'], artist['ConstituentID'], artist)
+
+
+def addArtwork(catalog, artwork):
+    """
+    Se agrega la obra entregada por parámetro en la última posición de la lista de obras del catalogo.
+    Párametros:
+        catalog: catalogo de artistas y obras
+        artist: artista a añadir
+    Se añade el artista en la última posición del catalogo con lt.addLast() 
+    """
+    mp.put(catalog['artworks'], artwork['ObjectID'], artwork)
+    medium =artwork['Medium']  # Se obtienen el medium
+    if mp.contains(catalog["mediums"],medium): 
+        lt.addLast(mp.get(catalog["mediums"],medium)['value'],artwork)
+    else:
+        lista_inicial=lt.newList()
+        lt.addLast(lista_inicial,artwork)
+        mp.put(catalog["mediums"],medium,lista_inicial)
 
 # Funciones para creacion de datos
 
 # Funciones de consulta
 
+def obrasMasAntiguas(catalog,medio,n):
+    res=""
+    if mp.contains(catalog["mediums"],medio):
+        lista_a_ordenar=mp.get(catalog["mediums"],medio)['value']
+        lista_ordenada=ms.sort(lista_a_ordenar,cmpArtworkByDate)
+        cont=1
+        for obra in lt.iterator(lista_ordenada):
+            res+=str(cont)+". Obra: "+obra["Title"]+"\n"
+            res+="Fecha Obra: "+obra["Date"]+"\n\n"
+            cont+=1
+            if cont>n:
+                break
+    return res
+
+
 # Funciones utilizadas para comparar elementos dentro de una lista/mapa
+
+def compareMedium(mediumName, entry):
+    """
+    Compara dos ConstituentID de artistas, consIDArtist es un identificador
+    y entry una pareja llave-valor
+    """
+    identry = me.getKey(entry)
+    if (mediumName == identry):
+        return 0
+    elif (mediumName > mediumName):
+        return 1
+    else:
+        return -1
+
+def cmpArtworkByDate(obra1,obra2): # Requerimiento Grupal 5: Función Comparación Ordenamiento
+    """
+    Función de comparación por fechas de artworks.
+    Si alguna de las dos fechas es vacía se toma como valor de referencia el
+    entero 2022. Esto se hace con el objetivo de dejar las fechas vacías de 
+    últimas al ordenar.
+    Parámetros:
+        obra1: primera obra, contiene el valor "Date"
+        obra2: segunda obra, contiene el valor "Date"
+    Retorno:
+        True si la obra1 tiene una fecha menor que la fecha2.
+        False en el caso contrario.
+    """
+    fecha1=2022 #año actual +1
+    fecha2=2022 
+    if len(obra1["Date"])>0:
+        fecha1=int(obra1["Date"])
+    if len(obra2["Date"])>0:
+        fecha2=int(obra2["Date"]) 
+    return fecha1<fecha2
 
 def compareConsIDArtist(consIDArtist, entry):
     """
@@ -97,5 +181,7 @@ def compareObjectID(ObjectID, entry):
         return 1
     else:
         return -1
+
+
 
 # Funciones de ordenamiento
