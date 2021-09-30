@@ -3,7 +3,7 @@
 ## Hecho por:
 1. Daniel Gomez | 201728920 | df.gomezb@uniandes.edu.co --  Requerimiento 3
 
-2. Jenifer Arce | 202014993 | j.arce@uniandes.edu.co --   Requerimiento 3
+2. Jenifer Arce | 202014993 | j.arce@uniandes.edu.co --   Requerimiento 4
 
 
 
