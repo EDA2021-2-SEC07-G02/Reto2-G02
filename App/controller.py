@@ -73,3 +73,6 @@ def loadArtworks(catalog):
 
 def obrasMasAntiguas(catalog,medio,n):
     return model.obrasMasAntiguas(catalog,medio,n)
+
+def clasificarObrasNacionalidad(catalog):
+    return model.clasificarObrasNacionalidad(catalog)

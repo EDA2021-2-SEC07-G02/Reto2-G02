@@ -53,7 +53,8 @@ def newCatalog():
     """
     catalog = {'artists': None,
                'artworks': None,
-               'mediums':None}
+               'mediums':None,
+               "nationality":None}
     
     #Mapas
     catalog['artists'] = mp.newMap(15000, #Hay aprox 15k de artistas
@@ -68,7 +69,22 @@ def newCatalog():
                                    maptype='CHAINING',
                                    loadfactor=4.0,
                                    comparefunction=compareMedium)
+    catalog['nationality'] = mp.newMap(300, #hay 232 nacionalidades
+                                   maptype='CHAINING',
+                                   loadfactor=4.0,
+                                   comparefunction=compareNationality)
     return catalog
+
+def NewNationalityArt(pais):
+    """
+    ------ 
+    """
+    nationality={"Nationality":"",
+                "Artworks": None,
+                "Total_obras":0}
+    nationality["Nationality"]=pais
+    nationality["Artworks"]=lt.newList()
+    return nationality
 
 # Funciones para agregar informacion al catalogo
 
@@ -94,12 +110,38 @@ def addArtwork(catalog, artwork):
     """
     mp.put(catalog['artworks'], artwork['ObjectID'], artwork)
     medium =artwork['Medium']  # Se obtienen el medium
+
     if mp.contains(catalog["mediums"],medium): 
         lt.addLast(mp.get(catalog["mediums"],medium)['value'],artwork)
     else:
         lista_inicial=lt.newList()
         lt.addLast(lista_inicial,artwork)
         mp.put(catalog["mediums"],medium,lista_inicial)
+    addNationality(catalog,artwork) #req nacionalidades
+    
+def addNationality(catalog,artwork):
+    # nacionalidades
+    constituentID=artwork["ConstituentID"][1:-1] #se obtiene el constituentID que relaciona una obra con un artista
+    codigoNum=constituentID.split(",")
+    objectID=artwork["ObjectID"]
+    for conID in codigoNum:
+        existArtist=mp.contains(catalog["artists"],conID)
+        nationality="Unknown"
+        if existArtist: #se comprueba si el artista existe, de lo contario la nacionalidad queda como "Unknown"
+            artist=mp.get(catalog["artists"],conID) #artista con ese ConstituentID
+            nationality=me.getValue(artist)["Nationality"] #nacionalidad del artista
+            if nationality=="Nationality unknown" or nationality=="":
+                nationality="Unknown"
+
+        existNationality=mp.contains(catalog["nationality"],nationality) #se comprueba si existe esta nacionalidad en el map
+        if existNationality:
+            entry=mp.get(catalog["nationality"],nationality)
+            nationalityMap=me.getValue(entry)
+        else:
+            nationalityMap=NewNationalityArt(nationality)
+            mp.put(catalog["nationality"],nationality,nationalityMap)
+        lt.addLast(nationalityMap["Artworks"],objectID) #Se añade solamente el objectID, preguntar si es necesario añadir toda la obra de arte
+        nationalityMap["Total_obras"]+=1
 
 # Funciones para creacion de datos
 
@@ -119,7 +161,9 @@ def obrasMasAntiguas(catalog,medio,n):
                 break
     return res
 
-
+def clasificarObrasNacionalidad(catalog):
+    #completarrrrrr
+    return catalog["nationality"]
 # Funciones utilizadas para comparar elementos dentro de una lista/mapa
 
 def compareMedium(mediumName, entry):
@@ -182,6 +226,23 @@ def compareObjectID(ObjectID, entry):
     else:
         return -1
 
+def compareNationality(Nationality, entry):
+    """
+    Compara dos Nacionalidades de los artistas correspondientes a un artwork, 
+    Nacionalidades es un identificador y entry una pareja llave-valor
+    """
+    identry = me.getKey(entry)
+    if Nationality == identry:
+        return 0
+    elif Nationality > identry:
+        return 1
+    else:
+        return -1
 
+def cmpNationalitiesSize(nacionalidad1,nacionalidad2):
+    """
+    Función de comparación por cantidad de artworks por nacionalidad.
+    """
+    return nacionalidad1["Total_obras"]>nacionalidad2["Total_obras"]
 
 # Funciones de ordenamiento
