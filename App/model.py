@@ -54,7 +54,7 @@ def newCatalog():
     catalog = {'artists': None,
                'artworks': None,
                'mediums':None,
-               "nationality":None}
+               "nationalities":None}
     
     #Mapas
     catalog['artists'] = mp.newMap(15000, #Hay aprox 15k de artistas
@@ -69,7 +69,7 @@ def newCatalog():
                                    maptype='CHAINING',
                                    loadfactor=4.0,
                                    comparefunction=compareMedium)
-    catalog['nationality'] = mp.newMap(300, #hay 232 nacionalidades
+    catalog['nationalities'] = mp.newMap(300, #hay 232 nacionalidades
                                    maptype='CHAINING',
                                    loadfactor=4.0,
                                    comparefunction=compareNationality)
@@ -77,7 +77,12 @@ def newCatalog():
 
 def NewNationalityArt(pais):
     """
-    ------ 
+    Esta funcion crea la estructura de artworks asociados
+    a una nacionalidad.
+        Parámetros: 
+        pais: nacionalidad
+    Retorno:
+        nacionality: diccionario de la nacionalidad
     """
     nationality={"Nationality":"",
                 "Artworks": None,
@@ -105,13 +110,13 @@ def addArtwork(catalog, artwork):
     Se agrega la obra entregada por parámetro en la última posición de la lista de obras del catalogo.
     Párametros:
         catalog: catalogo de artistas y obras
-        artist: artista a añadir
-    Se añade el artista en la última posición del catalogo con lt.addLast() 
+        artwork: obra de arte a añadir
+    Se añade la obra de arte al mapa de artworks,mediums y nationalities
     """
     mp.put(catalog['artworks'], artwork['ObjectID'], artwork)
     medium =artwork['Medium']  # Se obtienen el medium
 
-    if mp.contains(catalog["mediums"],medium): 
+    if mp.contains(catalog["mediums"],medium):
         lt.addLast(mp.get(catalog["mediums"],medium)['value'],artwork)
     else:
         lista_inicial=lt.newList()
@@ -121,10 +126,17 @@ def addArtwork(catalog, artwork):
     
 def addNationality(catalog,artwork):
     # nacionalidades
+    """
+    La función agrega la obra entregada por parámetro al mapa de nacionalidades.
+    Párametros:
+        catalog: catalogo de artistas y obras
+        artwork: obra de arte a añadir
+    """
     constituentID=artwork["ConstituentID"][1:-1] #se obtiene el constituentID que relaciona una obra con un artista
     codigoNum=constituentID.split(",")
     objectID=artwork["ObjectID"]
-    for conID in codigoNum:
+    for ID in codigoNum:
+        conID=ID.strip() #se eliminan los espacios en blanco
         existArtist=mp.contains(catalog["artists"],conID)
         nationality="Unknown"
         if existArtist: #se comprueba si el artista existe, de lo contario la nacionalidad queda como "Unknown"
@@ -133,13 +145,13 @@ def addNationality(catalog,artwork):
             if nationality=="Nationality unknown" or nationality=="":
                 nationality="Unknown"
 
-        existNationality=mp.contains(catalog["nationality"],nationality) #se comprueba si existe esta nacionalidad en el map
+        existNationality=mp.contains(catalog["nationalities"],nationality) #se comprueba si existe esta nacionalidad en el map
         if existNationality:
-            entry=mp.get(catalog["nationality"],nationality)
+            entry=mp.get(catalog["nationalities"],nationality)
             nationalityMap=me.getValue(entry)
         else:
             nationalityMap=NewNationalityArt(nationality)
-            mp.put(catalog["nationality"],nationality,nationalityMap)
+            mp.put(catalog["nationalities"],nationality,nationalityMap)
         lt.addLast(nationalityMap["Artworks"],objectID) #Se añade solamente el objectID, preguntar si es necesario añadir toda la obra de arte
         nationalityMap["Total_obras"]+=1
 
@@ -162,8 +174,8 @@ def obrasMasAntiguas(catalog,medio,n):
     return res
 
 def clasificarObrasNacionalidad(catalog):
-    #completarrrrrr
-    return catalog["nationality"]
+    #completarrrrrr req 4
+    return catalog["nationalities"]
 # Funciones utilizadas para comparar elementos dentro de una lista/mapa
 
 def compareMedium(mediumName, entry):

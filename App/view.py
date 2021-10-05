@@ -84,8 +84,13 @@ while True:
             print("Cargando información de los archivos ....")
             catalog=initCatalog()
             loadData(catalog)
+            print("Se ha completado la carga de artworks y artistas al catálogo")
+            lista_llaves_artworks=mp.keySet(catalog["artworks"])
+            lista_llaves_artists=mp.keySet(catalog["artists"])
             lista_llaves_medium=mp.keySet(catalog["mediums"])
-            lista_llaves_nacionality=mp.keySet(catalog["nationality"])
+            lista_llaves_nacionality=mp.keySet(catalog["nationalities"])
+            print("Tamaño de mapa artworks ",lt.size(lista_llaves_artworks))
+            print("Tamaño de mapa nacionalidades ",lt.size(lista_llaves_artists))
             print("Tamaño de mapa mediums ",lt.size(lista_llaves_medium))
             print("Tamaño de mapa nacionalidades ",lt.size(lista_llaves_nacionality))
         
@@ -110,7 +115,7 @@ while True:
                 print(nacionalidad,"--- Q obras: ",str(cantidadobras))
             else:
                 print("La nacionalidad no existe")
-            #nacionalidades=mp.keySet(respuesta)
+            # nacionalidades=mp.keySet(respuesta)
             # for pais in lt.iterator(nacionalidades):
             #     obras=mp.get(respuesta,pais)
             #     cantidadobras=me.getValue(obras)["Total_obras"]
