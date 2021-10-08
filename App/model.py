@@ -25,6 +25,7 @@
  """
 
 
+from DISClib.DataStructures.arraylist import newList
 import config as cf
 from DISClib.ADT import list as lt
 from DISClib.ADT import map as mp
@@ -56,12 +57,16 @@ def newCatalog():
                'mediums':None,
                "nationalities":None}
     
+    # catalog["artists"]=lt.newList("ARRAY_LIST",cpmfunction=compareConsIDArtist)
+    # catalog["artworks"]=lt.newList("ARRAY_LIST",cpmfunction=compareObjectID)
     #Mapas
     catalog['artists'] = mp.newMap(15000, #Hay aprox 15k de artistas
                                    maptype='CHAINING', #elegir si chaining o probing
                                    loadfactor=4.0,
                                    comparefunction=compareConsIDArtist)
-    catalog['artworks'] = mp.newMap(150000, #Hay 138150 obras de arte
+
+    ##!!!! Creo que no es necesario hacer mapa de artworks
+    catalog['artworks'] = mp.newMap(150000, #Hay 138150 obras de arte 
                                    maptype='CHAINING',
                                    loadfactor=4.0,
                                    comparefunction=compareObjectID)
@@ -70,6 +75,10 @@ def newCatalog():
                                    loadfactor=4.0,
                                    comparefunction=compareMedium)
     catalog['nationalities'] = mp.newMap(300, #hay 232 nacionalidades
+                                   maptype='CHAINING',
+                                   loadfactor=4.0,
+                                   comparefunction=compareNationality)
+    catalog["Artists_BeginDate"] = mp.newMap(2000,
                                    maptype='CHAINING',
                                    loadfactor=4.0,
                                    comparefunction=compareNationality)
@@ -91,6 +100,22 @@ def NewNationalityArt(pais):
     nationality["Artworks"]=lt.newList()
     return nationality
 
+def newBeginDate(nacimiento):
+    """
+    Esta funcion crea la estructura de años nacimientos asociados
+    a artistas.
+        Parámetros: 
+        nacimiento: año de nacimiento. Fórmato YYYY
+    Retorno:
+        nacimiento: diccionario de año nacimiento
+    """
+    BeginDate={"FechaNacimiento":"",
+                "Artistas":None}
+    BeginDate["FechaNacimiento"]=int(nacimiento)
+    BeginDate["Artistas"]=lt.newList()
+    return BeginDate
+
+
 # Funciones para agregar informacion al catalogo
 
 def addArtist(catalog, artist):
@@ -103,6 +128,20 @@ def addArtist(catalog, artist):
     Se añade el artista en mapa 
     """
     mp.put(catalog['artists'], artist['ConstituentID'], artist)
+    if len(artist["BeginDate"])==4: #Se ignoran si su fecha de nacimiento es vacía (no se añade al mapa de begindate)
+        addBeginDate(catalog,artist)
+
+def addBeginDate(catalog,artist): #req 1 MAPA
+    nacimiento=artist["BeginDate"]
+    existYear=mp.contains(catalog["Artists_BeginDate"],nacimiento)
+    if existYear:
+        entry=mp.get(catalog["Artists_BeginDate"],nacimiento)
+        yearMap=me.getValue(entry)
+    else:
+        yearMap=newBeginDate(nacimiento)
+        mp.put(catalog["Artists_BeginDate"],nacimiento,yearMap)
+    lt.addLast(yearMap["Artistas"],artist["ConstituentID"]) #Se añade solamente el 'ConstituentID'
+
 
 
 def addArtwork(catalog, artwork):
@@ -159,6 +198,20 @@ def addNationality(catalog,artwork):
 
 # Funciones de consulta
 
+def listarArtistasCronologicamente(catalog,fechaInicial,fechaFinal):
+    listaNac=lt.newList("ARRAY_LIST") #Se crea una nueva lista
+    nacimientoKeys=mp.keySet(catalog["Artists_BeginDate"]) #Todos los keys del mapa de años de nacimiento
+    contador=0
+    for fechaStr in lt.iterator(nacimientoKeys):
+        fecha=int(fechaStr)
+        if fecha>=fechaInicial and fecha<=fechaFinal:
+            lt.addLast(listaNac,fecha)
+            cantidadArtistas=mp.get(catalog["Artists_BeginDate"],fechaStr)["value"]["Artistas"]["size"]
+            contador+=cantidadArtistas
+    print(listaNac)
+    ms.sort(listaNac,cmpArtistDate)
+    return listaNac,contador
+
 def obrasMasAntiguas(catalog,medio,n):
     res=""
     if mp.contains(catalog["mediums"],medio):
@@ -174,9 +227,48 @@ def obrasMasAntiguas(catalog,medio,n):
     return res
 
 def clasificarObrasNacionalidad(catalog):
-    #completarrrrrr req 4
-    return catalog["nationalities"]
+    """
+    Se crea una lista para guardar las nacionalidades que existan del mapa
+    junto con su cantidad de obras. Seguido a esto, la lista se ordena con merge sort.
+    
+    Parámetros:
+        catalog: catalogo de obras y artistas
+    Retorno:
+        top10: Lista con el top10 de nacionalidades, ordenada de mayor a menor
+        keyPrimerlugar: Nombre de la nacionalidad del primer lugar
+    """
+    nationalitiesQ=lt.newList("ARRAY_LIST") #Se crea una nueva lista
+    nationalityKeys=mp.keySet(catalog["nationalities"]) #Todos los keys del mapa de nacionalidades
+    for nationality in lt.iterator(nationalityKeys): 
+        infoNationality=mp.get(catalog["nationalities"],nationality)["value"]
+        infoAdd={"Nacionalidad":nationality,
+                "Total_obras":infoNationality["Total_obras"]}
+        lt.addLast(nationalitiesQ,infoAdd)
+    ms.sort(nationalitiesQ,cmpNationalitiesSize)
+    keyPrimerlugar=lt.getElement(nationalitiesQ,1)["Nacionalidad"]
+    top10=lt.subList(nationalitiesQ,1,10)
+    return top10,keyPrimerlugar,nationalitiesQ #nationalitiesQ solamente para lab6, borrar después 
+
+# 
 # Funciones utilizadas para comparar elementos dentro de una lista/mapa
+
+# def compareConsIDArtistLT(catalog, ConsIDArtist):  #Función comparación al crear una array_list
+#     """
+    
+#     """
+#     if (ConsIDArtist == catalog['Nationality']):
+#         return 0
+#     else:
+#         return -1
+
+# def compareObjectID(catalog, ObjectID):  #Función comparación al crear una array_list
+#     """
+    
+#     """
+#     if (ObjectID == catalog['artworks']):
+#         return 0
+#     else:
+#         return -1
 
 def compareMedium(mediumName, entry):
     """
@@ -212,7 +304,7 @@ def cmpArtworkByDate(obra1,obra2): # Requerimiento Grupal 5: Función Comparaci�
         fecha2=int(obra2["Date"]) 
     return fecha1<fecha2
 
-def compareConsIDArtist(consIDArtist, entry):
+def compareConsIDArtist(consIDArtist, entry): #MAPA
     """
     Compara dos ConstituentID de artistas, consIDArtist es un identificador
     y entry una pareja llave-valor
@@ -225,7 +317,7 @@ def compareConsIDArtist(consIDArtist, entry):
     else:
         return -1
 
-def compareObjectID(ObjectID, entry):
+def compareObjectID(ObjectID, entry): #MAPA
     """
     Compara dos ObjectID de artworks, ObjectID es un identificador
     y entry una pareja llave-valor
@@ -257,4 +349,10 @@ def cmpNationalitiesSize(nacionalidad1,nacionalidad2):
     """
     return nacionalidad1["Total_obras"]>nacionalidad2["Total_obras"]
 
+def cmpArtistDate(fecha1,fecha2):  # Requerimiento Grupal 1: Función Comparación Ordenamiento
+    """
+    Compara la fecha de nacimiento
+        Devuelve verdadero (True) si fecha1 es menor en fecha que fecha2, de lo contrario (False)
+    """
+    return fecha1<fecha2
 # Funciones de ordenamiento

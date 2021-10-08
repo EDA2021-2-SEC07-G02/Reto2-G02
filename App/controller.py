@@ -23,7 +23,8 @@
 import config as cf
 import model
 import csv
-
+import time
+from tqdm import tqdm,trange
 
 """
 El controlador se encarga de mediar entre la vista y el modelo.
@@ -40,36 +41,49 @@ def initCatalog():
 
 # Funciones para la carga de datos
 
-def loadData(catalog):
+def loadData(catalog,nArtists=6656,nArtWork=15008): #10 pct parámetros
 
     """
     Carga los artistas y obras al catalogo
     """
-    loadArtists(catalog)
-    loadArtworks(catalog)
+    loadArtists(catalog,nArtists)
+    loadArtworks(catalog,nArtWork)
 
-def loadArtists(catalog):
+def loadArtists(catalog,nArtists=6656):
 
     """
     Carga los artistas en una lista dado un nombre de archivo
     """
     artistsFilename = cf.data_dir + 'MoMA\\Artists-utf8-small.csv'
     inputFile= csv.DictReader(open(artistsFilename, encoding='utf-8'))
+    bar =tqdm(desc="..Carga artistas: ",total=nArtists)
     for artist in inputFile:
         model.addArtist(catalog, artist)
+        update_iter=1
+        bar.update(update_iter)
 
-def loadArtworks(catalog):
+def loadArtworks(catalog,nArtWork=15008):
     """
     Carga las obras en una lista dado un nombre de archivo
     """
     artworksFilename = cf.data_dir + 'MoMA\\Artworks-utf8-small.csv'
     inputFile= csv.DictReader(open(artworksFilename, encoding='utf-8'))
+    bar =tqdm(desc="..Carga Artworks: ",total=nArtWork)
     for artwork in inputFile:
         model.addArtwork(catalog, artwork)
+        update_iter=1
+        bar.update(update_iter)
 
 # Funciones de ordenamiento
 
 # Funciones de consulta sobre el catálogo
+
+def listarArtistasCronologicamente(catalog,fechaInicial,fechaFinal):
+    """
+    Retorna a los artistas ordenados cronologicamente de acuerdo a un rango de fechas
+    Además del total de artistas en ese rango de fechas
+    """
+    return model.listarArtistasCronologicamente(catalog,int(fechaInicial),int(fechaFinal))
 
 def obrasMasAntiguas(catalog,medio,n):
     return model.obrasMasAntiguas(catalog,medio,n)

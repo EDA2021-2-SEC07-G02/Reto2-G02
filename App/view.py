@@ -38,7 +38,8 @@ operación solicitada
 
 def printMenu():
     print("Bienvenido")
-    print("1- Cargar información en el catálogo")
+    print("0- Cargar información en el catálogo")
+    print("1- Listar cronólogicamente a artistas")
     print("2- Seleccionar n obras más antiguas para un medio específico")
     print("4- Clasificar obras dependiendo su nacionalidad ")
     print("7- Salir")
@@ -57,7 +58,7 @@ def initCatalog():
     """
     return controller.initCatalog()
 
-def loadData(catalog):
+def loadData(catalog,nArtists=6656,nArtWork=15008):
     """
     Carga los artistas y obras en la estructura de datos
     
@@ -68,7 +69,7 @@ def loadData(catalog):
         Catalogo cardgado con obras y artistas
     """
     try:
-        controller.loadData(catalog)
+        controller.loadData(catalog,nArtists,nArtWork)
     except:
         print("Error en la carga de información, verifique que los archivos de la base de dato estén en el\
             directorio correcto")
@@ -80,23 +81,47 @@ while True:
     printMenu()
     inputs = input('Seleccione una opción para continuar\n')
     if inputs.isnumeric:
-        if int(inputs[0]) == 1:
-            print("Cargando información de los archivos ....")
+        if int(inputs[0]) == 0:
+            print("\nCargando información de los archivos ....")
             catalog=initCatalog()
-            loadData(catalog)
-            print("Se ha completado la carga de artworks y artistas al catálogo")
-            lista_llaves_artworks=mp.keySet(catalog["artworks"])
-            lista_llaves_artists=mp.keySet(catalog["artists"])
-            lista_llaves_medium=mp.keySet(catalog["mediums"])
-            lista_llaves_nacionality=mp.keySet(catalog["nationalities"])
-            print("Tamaño de mapa artworks ",lt.size(lista_llaves_artworks))
-            print("Tamaño de mapa nacionalidades ",lt.size(lista_llaves_artists))
-            print("Tamaño de mapa mediums ",lt.size(lista_llaves_medium))
-            print("Tamaño de mapa nacionalidades ",lt.size(lista_llaves_nacionality))
+            loadData(catalog,nArtists=1948,nArtWork=768)
+            print("\n\nSe ha completado la carga de artworks y artistas al catálogo")
+            # lista_llaves_artworks=mp.keySet(catalog["artworks"])
+            # lista_llaves_artists=mp.keySet(catalog["artists"])
+            # lista_llaves_medium=mp.keySet(catalog["mediums"])
+            # lista_llaves_nacionality=mp.keySet(catalog["nationalities"])
+            # print("Tamaño de mapa artworks ",lt.size(lista_llaves_artworks))
+            # print("Tamaño de mapa artistas ",lt.size(lista_llaves_artists))
+            # print("Tamaño de mapa mediums ",lt.size(lista_llaves_medium))
+            # print("Tamaño de mapa nacionalidades ",lt.size(lista_llaves_nacionality))
+            print("Tamaño de mapa artworks: ",catalog["artworks"]["size"])
+            print("Tamaño de mapa artistas: ",catalog["artists"]["size"])
+            print("Tamaño de mapa mediums: ",catalog["mediums"]["size"])
+            print("Tamaño de mapa nacionalidades: ",catalog["nationalities"]["size"])
         
         # Caso cuando no hay datos cargados
         elif catalog==None and int(inputs[0])!=7:
             print("\nPara correr la funciones cargue la información primero.")
+        
+        elif int(inputs[0])==1:
+            fechaInicial=input("\nIngrese el año inicial (AAAA): ")
+            fechaFinal=input("\nIngrese el año final (AAAA): ")
+            resultado= controller.listarArtistasCronologicamente(catalog, fechaInicial, fechaFinal)
+            print("\nHay ",str(resultado[1])," artistas en este rango de fechas")
+            nartistasView=0
+            posInicial=1
+            print("3 primeros artistas")
+            while nartistasView<=3:
+                fechaIn=lt.getElement(resultado[0],posInicial)
+                artistasLista=mp.get(catalog["Artists_BeginDate"],str(fechaIn))["value"]["Artistas"]
+                #print(artistasLista)
+                for artista in lt.iterator(artistasLista):
+                    nartistasView+=1
+                    print(nartistasView,mp.get(catalog["artists"],artista)["value"])
+                    if nartistasView>=3:
+                        print(artista,nartistasView)
+                        break
+                posInicial+=1
 
         elif int(inputs[0]) == 2:
             medio=input("Ingrese el medio: ")
@@ -107,14 +132,25 @@ while True:
             pass
         elif int(inputs[0]) == 4:
             respuesta=controller.clasificarObrasNacionalidad(catalog)
+            
+            print("\n--- Lab 6 ---")
             nacionalidad=input("Ingrese la nacionalidad: ")
-            existNationality=mp.contains(respuesta,nacionalidad)
+            existNationality=mp.contains(catalog["nationalities"],nacionalidad)
             if existNationality:
-                obras=mp.get(respuesta,nacionalidad)
+                obras=mp.get(catalog["nationalities"],nacionalidad)
                 cantidadobras=me.getValue(obras)["Total_obras"]
                 print(nacionalidad,"--- Q obras: ",str(cantidadobras))
             else:
                 print("La nacionalidad no existe")
+            
+            print("\n--- Reto 2 ---")
+            print("\n Top 10 países por obras")
+            i=1
+            for nationality in lt.iterator(respuesta[0]):
+                print(str(i)+". "+nationality["Nacionalidad"]+" - Q:"+str(nationality["Total_obras"]))
+                i+=1
+            print("\nPrimer Lugar: "+respuesta[1])
+            print("\nObras del primer lugar:\n\n")
             # nacionalidades=mp.keySet(respuesta)
             # for pais in lt.iterator(nacionalidades):
             #     obras=mp.get(respuesta,pais)
