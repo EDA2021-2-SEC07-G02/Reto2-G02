@@ -32,6 +32,7 @@ from DISClib.ADT import map as mp
 from DISClib.DataStructures import mapentry as me
 from DISClib.Algorithms.Sorting import shellsort as sa
 from DISClib.Algorithms.Sorting import mergesort as ms
+from DISClib.Algorithms.Sorting import selectionsort as selection
 assert cf
 
 """
@@ -208,8 +209,11 @@ def listarArtistasCronologicamente(catalog,fechaInicial,fechaFinal):
             lt.addLast(listaNac,fecha)
             cantidadArtistas=mp.get(catalog["Artists_BeginDate"],fechaStr)["value"]["Artistas"]["size"]
             contador+=cantidadArtistas
+    print("\nLista de nacimientos sin ordenar\n",listaNac)
+    #ms.sort(listaNac,cmpArtistDate)
+    print("\nSelection editado! solamente los 10 primeros y últimos lugares \n")
+    selection.sortEdit(listaNac,cmpArtistDate,10)
     print(listaNac)
-    ms.sort(listaNac,cmpArtistDate)
     return listaNac,contador
 
 def obrasMasAntiguas(catalog,medio,n):

@@ -50,3 +50,45 @@ def sort(lst, cmpfunction):
         lt.exchange(lst, pos1, minimum)  # elemento más pequeño -> elem pos1
         pos1 += 1
     return lst
+
+#Hicimos algunos cambios al algoritomo de selection sort
+
+def sortEdit(lst, cmpfunction,posAOrdenar):
+    """
+    !!!Algoritmo de selection sort con modificaciones para el reto.
+
+    Este algoritmo solamente ordenará las n primeras y últimas posiciones en la lista,
+    es decir, no se ordenará la lista completa. 
+        Parámetro extra:
+            posAOrdenar: Número entero que hace referencia a cuántas posiciones iniciales y finales deben ser
+            ordenas.
+    """
+    size = lt.size(lst)
+    pos1 = 1
+    iteraciones=0
+    while pos1 < size and iteraciones<posAOrdenar: #El algoritmo se detendrá al tener ordenado las x primeras posiciones
+        minimum = pos1    # minimun tiene el menor elemento
+        pos2 = pos1 + 1
+        while (pos2 <= size):
+            if (cmpfunction(lt.getElement(lst, pos2),
+               (lt.getElement(lst, minimum)))):
+                minimum = pos2  # minimum = posición elemento más pequeño
+            pos2 += 1
+        lt.exchange(lst, pos1, minimum)  # elemento más pequeño -> elem pos1
+        pos1 += 1
+        iteraciones+=1
+    
+    pos1M=size
+    iteraciones=0
+    while pos1M > 1 and iteraciones<posAOrdenar: #El algoritmo se detendrá al tener ordenado las x últimas posiciones
+        maximum = pos1M    # maximum tiene el maximo elemento
+        pos2 = pos1M - 1
+        while (pos2 > 1):
+            if not (cmpfunction(lt.getElement(lst, pos2),
+                (lt.getElement(lst, maximum)))):
+                maximum = pos2  # maximum = posición elemento más grande
+            pos2 -= 1
+        lt.exchange(lst, pos1M, maximum)  # elemento más grande -> elem pos1
+        pos1M -= 1
+        iteraciones+=1
+    return lst
