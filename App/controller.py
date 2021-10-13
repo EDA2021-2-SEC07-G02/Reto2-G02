@@ -24,7 +24,7 @@ import config as cf
 import model
 import csv
 import time
-from tqdm import tqdm,trange
+#from tqdm import tqdm,trange
 
 """
 El controlador se encarga de mediar entre la vista y el modelo.
@@ -32,11 +32,11 @@ El controlador se encarga de mediar entre la vista y el modelo.
 
 # Inicialización del Catálogo 
 
-def initCatalog():
+def initCatalog(mapLab,FactorCarga):
     """
     Llama la funcion de inicializacion del catalogo del modelo.
     """
-    catalog = model.newCatalog()
+    catalog = model.newCatalog(mapLab,FactorCarga)
     return catalog
 
 # Funciones para la carga de datos
@@ -56,11 +56,14 @@ def loadArtists(catalog,nArtists=6656):
     """
     artistsFilename = cf.data_dir + 'MoMA\\Artists-utf8-small.csv'
     inputFile= csv.DictReader(open(artistsFilename, encoding='utf-8'))
-    bar =tqdm(desc="..Carga artistas: ",total=nArtists)
+    #bar =tqdm(desc="..Carga artistas: ",total=nArtists)
+    start_time = time.process_time()
     for artist in inputFile:
         model.addArtist(catalog, artist)
-        update_iter=1
-        bar.update(update_iter)
+     #   update_iter=1
+     #   bar.update(update_iter)
+    stop_time = time.process_time()
+    print("Tiempo mapas artists (constituent ID),(BeginDate)",contarTiempo(start_time,stop_time)[1]) #MOD LAB!
 
 def loadArtworks(catalog,nArtWork=15008):
     """
@@ -68,11 +71,14 @@ def loadArtworks(catalog,nArtWork=15008):
     """
     artworksFilename = cf.data_dir + 'MoMA\\Artworks-utf8-small.csv'
     inputFile= csv.DictReader(open(artworksFilename, encoding='utf-8'))
-    bar =tqdm(desc="..Carga Artworks: ",total=nArtWork)
+    #bar =tqdm(desc="..Carga Artworks: ",total=nArtWork)
+    start_time = time.process_time()
     for artwork in inputFile:
         model.addArtwork(catalog, artwork)
-        update_iter=1
-        bar.update(update_iter)
+     #   update_iter=1
+     #   bar.update(update_iter)
+    stop_time = time.process_time()
+    print("Tiempo mapas obras de arte (objectid),(medios),(nacionalidad)",contarTiempo(start_time,stop_time)[1]) #MOD LAB!
 
 # Funciones de ordenamiento
 
@@ -90,3 +96,9 @@ def obrasMasAntiguas(catalog,medio,n):
 
 def clasificarObrasNacionalidad(catalog):
     return model.clasificarObrasNacionalidad(catalog)
+
+def buscarNacionalidad(catalog,nacionalidad):
+    return model.buscarNacionalidad(catalog,nacionalidad)
+
+def contarTiempo(start_time,stop_time):
+    return model.contarTiempo(start_time,stop_time)

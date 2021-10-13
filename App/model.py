@@ -34,6 +34,7 @@ from DISClib.Algorithms.Sorting import shellsort as sa
 from DISClib.Algorithms.Sorting import mergesort as ms
 from DISClib.Algorithms.Sorting import selectionsort as selection
 assert cf
+import time
 
 """
 Se define la estructura de un catálogo de videos. El catálogo tendrá dos listas, una para los videos, otra para las categorias de
@@ -42,7 +43,7 @@ los mismos.
 
 # Construccion de modelos
 
-def newCatalog():
+def newCatalog(mapLab='CHAINING',FactorCarga=4.0):
     # TODO: Documentación return
     """
     Inicializa el catálogo. Se crea dos mapas/indices, una de ellos para guardar a los artistas, 
@@ -72,17 +73,17 @@ def newCatalog():
                                    loadfactor=4.0,
                                    comparefunction=compareObjectID)
     catalog['mediums'] = mp.newMap(1000,
-                                   maptype='CHAINING',
-                                   loadfactor=4.0,
+                                   maptype=mapLab,
+                                   loadfactor=FactorCarga,
                                    comparefunction=compareMedium)
     catalog['nationalities'] = mp.newMap(300, #hay 232 nacionalidades
-                                   maptype='CHAINING',
-                                   loadfactor=4.0,
+                                   maptype=mapLab,
+                                   loadfactor=FactorCarga,
                                    comparefunction=compareNationality)
     catalog["Artists_BeginDate"] = mp.newMap(2000,
                                    maptype='CHAINING',
                                    loadfactor=4.0,
-                                   comparefunction=compareNationality)
+                                   comparefunction=compareBeginDate)
     return catalog
 
 def NewNationalityArt(pais):
@@ -248,11 +249,29 @@ def clasificarObrasNacionalidad(catalog):
         infoAdd={"Nacionalidad":nationality,
                 "Total_obras":infoNationality["Total_obras"]}
         lt.addLast(nationalitiesQ,infoAdd)
-    ms.sort(nationalitiesQ,cmpNationalitiesSize)
+    #ms.sort(nationalitiesQ,cmpNationalitiesSize)
+    selection.sortEdit(nationalitiesQ,cmpNationalitiesSize,10,ordenarInicio=True,ordenarFinal=False)
     keyPrimerlugar=lt.getElement(nationalitiesQ,1)["Nacionalidad"]
     top10=lt.subList(nationalitiesQ,1,10)
     return top10,keyPrimerlugar,nationalitiesQ #nationalitiesQ solamente para lab6, borrar después 
 
+def buscarNacionalidad(catalog,nacionalidad): #Edit laboratorio 6
+    obrasNacionalidad=""
+    existNationality=mp.contains(catalog["nationalities"],nacionalidad)
+    if existNationality:
+        obras=mp.get(catalog["nationalities"],nacionalidad)
+        cantidadobras=me.getValue(obras)["Total_obras"]
+        obrasNacionalidad=str(cantidadobras)
+    else:
+        obrasNacionalidad="La nacionalidad no existe"
+    return obrasNacionalidad
+
+def contarTiempo(start_time,stop_time):
+    # start_time = time.process_time()
+    # stop_time = time.process_time()
+    elapsed_time_mseg = (stop_time - start_time)*1000
+    respuestaTexto="el tiempo (mseg) es: "+str(elapsed_time_mseg)
+    return elapsed_time_mseg,respuestaTexto
 # 
 # Funciones utilizadas para comparar elementos dentro de una lista/mapa
 
@@ -346,7 +365,18 @@ def compareNationality(Nationality, entry):
         return 1
     else:
         return -1
-
+def compareBeginDate(Date, entry): #MAPA
+    """
+    Compara dos ObjectID de artworks, ObjectID es un identificador
+    y entry una pareja llave-valor
+    """
+    identry = me.getKey(entry)
+    if (int(Date) == int(identry)):
+        return 0
+    elif (int(Date) > int(identry)):
+        return 1
+    else:
+        return -1
 def cmpNationalitiesSize(nacionalidad1,nacionalidad2):
     """
     Función de comparación por cantidad de artworks por nacionalidad.

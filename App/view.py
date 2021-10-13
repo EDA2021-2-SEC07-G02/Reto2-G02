@@ -46,7 +46,7 @@ def printMenu():
 
 # Funciones de inicialización de catalogo y carga de datos
 catalog = None
-def initCatalog():
+def initCatalog(mapLab,FactorCarga):
     """
     Inicializa el catalogo de libros
 
@@ -56,7 +56,7 @@ def initCatalog():
     Retorno:
         Catalogo inicializado
     """
-    return controller.initCatalog()
+    return controller.initCatalog(mapLab,FactorCarga)
 
 def loadData(catalog,nArtists=6656,nArtWork=15008):
     """
@@ -83,17 +83,15 @@ while True:
     if inputs.isnumeric:
         if int(inputs[0]) == 0:
             print("\nCargando información de los archivos ....")
-            catalog=initCatalog()
+            mapLab0=input("(Prueba) Selecione el mapa (1- 'CHAINING' 2-'PROBING')\n")
+            FactorCarga=float(input("Ingrese el factor de carga:  "))
+            mapLab='PROBING'
+            if mapLab0==1:
+                mapLab="CHAINING"
+            catalog=initCatalog(mapLab,FactorCarga)
+            print("Se cargaron los mapas de Nacionalidad y Medios con "+mapLab+" Factor de carga: "+str(FactorCarga))
             loadData(catalog,nArtists=1948,nArtWork=768)
             print("\n\nSe ha completado la carga de artworks y artistas al catálogo")
-            # lista_llaves_artworks=mp.keySet(catalog["artworks"])
-            # lista_llaves_artists=mp.keySet(catalog["artists"])
-            # lista_llaves_medium=mp.keySet(catalog["mediums"])
-            # lista_llaves_nacionality=mp.keySet(catalog["nationalities"])
-            # print("Tamaño de mapa artworks ",lt.size(lista_llaves_artworks))
-            # print("Tamaño de mapa artistas ",lt.size(lista_llaves_artists))
-            # print("Tamaño de mapa mediums ",lt.size(lista_llaves_medium))
-            # print("Tamaño de mapa nacionalidades ",lt.size(lista_llaves_nacionality))
             print("Tamaño de mapa artworks: ",catalog["artworks"]["size"])
             print("Tamaño de mapa artistas: ",catalog["artists"]["size"])
             print("Tamaño de mapa mediums: ",catalog["mediums"]["size"])
@@ -132,30 +130,30 @@ while True:
             pass
         elif int(inputs[0]) == 4:
             respuesta=controller.clasificarObrasNacionalidad(catalog)
-            
-            print("\n--- Lab 6 ---")
-            nacionalidad=input("Ingrese la nacionalidad: ")
-            existNationality=mp.contains(catalog["nationalities"],nacionalidad)
-            if existNationality:
-                obras=mp.get(catalog["nationalities"],nacionalidad)
-                cantidadobras=me.getValue(obras)["Total_obras"]
-                print(nacionalidad,"--- Q obras: ",str(cantidadobras))
-            else:
-                print("La nacionalidad no existe")
-            
-            print("\n--- Reto 2 ---")
-            print("\n Top 10 países por obras")
-            i=1
-            for nationality in lt.iterator(respuesta[0]):
-                print(str(i)+". "+nationality["Nacionalidad"]+" - Q:"+str(nationality["Total_obras"]))
-                i+=1
-            print("\nPrimer Lugar: "+respuesta[1])
-            print("\nObras del primer lugar:\n\n")
-            # nacionalidades=mp.keySet(respuesta)
-            # for pais in lt.iterator(nacionalidades):
-            #     obras=mp.get(respuesta,pais)
-            #     cantidadobras=me.getValue(obras)["Total_obras"]
-            #     print(pais,"--- Q obras: ",str(cantidadobras))
+            opcion=int(input("Seleccione la respuesta que quiere ver: \n1- Lab6 \n2- Reto 2\n"))
+            if opcion==1:
+                print("\n--- Lab 6 ---")
+                nacionalidad=input("Ingrese la nacionalidad: ")
+                respuesta=controller.buscarNacionalidad(catalog,nacionalidad)
+                print("Cantidad de obras en la nacionalidad:"+nacionalidad+"\nCantidad obras: "+respuesta)
+
+            if opcion==2:
+                print("\n--- Reto 2 ---")
+                print("\n Top 10 países por obras")
+                print(respuesta[0])
+                i=1
+                for nationality in lt.iterator(respuesta[0]):
+                    print(str(i)+". "+nationality["Nacionalidad"]+" - Q:"+str(nationality["Total_obras"]))
+                    i+=1
+                    if i>10:
+                        break
+                print("\nPrimer Lugar: "+respuesta[1])
+                print("\nObras del primer lugar:\n\n")
+                # nacionalidades=mp.keySet(respuesta)
+                # for pais in lt.iterator(nacionalidades):
+                #     obras=mp.get(respuesta,pais)
+                #     cantidadobras=me.getValue(obras)["Total_obras"]
+                #     print(pais,"--- Q obras: ",str(cantidadobras))
         # Opción 0: Salir
         elif int(inputs[0]) == 7:
             sys.exit(0)

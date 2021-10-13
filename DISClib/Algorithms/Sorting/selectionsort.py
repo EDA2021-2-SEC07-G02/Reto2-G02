@@ -53,7 +53,7 @@ def sort(lst, cmpfunction):
 
 #Hicimos algunos cambios al algoritomo de selection sort
 
-def sortEdit(lst, cmpfunction,posAOrdenar):
+def sortEdit(lst, cmpfunction,posAOrdenar,ordenarInicio=True,ordenarFinal=False):
     """
     !!!Algoritmo de selection sort con modificaciones para el reto.
 
@@ -66,7 +66,7 @@ def sortEdit(lst, cmpfunction,posAOrdenar):
     size = lt.size(lst)
     pos1 = 1
     iteraciones=0
-    while pos1 < size and iteraciones<posAOrdenar: #El algoritmo se detendrá al tener ordenado las x primeras posiciones
+    while pos1 < size and iteraciones<posAOrdenar and ordenarInicio: #El algoritmo se detendrá al tener ordenado las x primeras posiciones
         minimum = pos1    # minimun tiene el menor elemento
         pos2 = pos1 + 1
         while (pos2 <= size):
@@ -80,7 +80,7 @@ def sortEdit(lst, cmpfunction,posAOrdenar):
     
     pos1M=size
     iteraciones=0
-    while pos1M > 1 and iteraciones<posAOrdenar: #El algoritmo se detendrá al tener ordenado las x últimas posiciones
+    while pos1M > 1 and iteraciones<posAOrdenar and ordenarFinal: #El algoritmo se detendrá al tener ordenado las x últimas posiciones
         maximum = pos1M    # maximum tiene el maximo elemento
         pos2 = pos1M - 1
         while (pos2 > 1):
