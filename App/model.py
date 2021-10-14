@@ -156,15 +156,19 @@ def addArtwork(catalog, artwork):
     """
     #mp.put(catalog['artworks'], artwork['ObjectID'], artwork)
     lt.addLast(catalog["artworks"],artwork)
-    # medium =artwork['Medium']  # Se obtienen el medium
-
-    # if mp.contains(catalog["mediums"],medium):
-    #     lt.addLast(mp.get(catalog["mediums"],medium)['value'],artwork)
-    # else:
-    #     lista_inicial=lt.newList()
-    #     lt.addLast(lista_inicial,artwork)
-    #     mp.put(catalog["mediums"],medium,lista_inicial)
     addNationality(catalog,artwork) #req nacionalidades
+    medium =artwork['Medium']  # Se obtienen el medium
+    addMedium(catalog,medium,artwork)
+
+def addMedium(catalog,medium,artwork):
+    if mp.contains(catalog["mediums"],medium):
+        lt.addLast(mp.get(catalog["mediums"],medium)['value'],artwork)
+    else:
+        lista_inicial=lt.newList()
+        lt.addLast(lista_inicial,artwork)
+        mp.put(catalog["mediums"],medium,lista_inicial)
+
+    
     
 def addNationality(catalog,artwork):
     # nacionalidades
