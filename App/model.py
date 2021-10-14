@@ -60,7 +60,7 @@ def newCatalog(mapLab='CHAINING',FactorCarga=4.0):
                "nationalities":None}
     
     # catalog["artists"]=lt.newList("ARRAY_LIST",cpmfunction=compareConsIDArtist)
-    # catalog["artworks"]=lt.newList("ARRAY_LIST",cpmfunction=compareObjectID)
+    catalog["artworks"]=lt.newList("ARRAY_LIST",cmpfunction=compareObjectID)
     #Mapas
     catalog['artists'] = mp.newMap(15000, #Hay aprox 15k de artistas
                                    maptype='CHAINING', #elegir si chaining o probing
@@ -68,19 +68,19 @@ def newCatalog(mapLab='CHAINING',FactorCarga=4.0):
                                    comparefunction=compareConsIDArtist)
 
     ##!!!! Creo que no es necesario hacer mapa de artworks
-    catalog['artworks'] = mp.newMap(150000, #Hay 138150 obras de arte 
-                                   maptype='CHAINING',
-                                   loadfactor=4.0,
-                                   comparefunction=compareObjectID)
+    # catalog['artworks'] = mp.newMap(150000, #Hay 138150 obras de arte 
+    #                                maptype='CHAINING',
+    #                                loadfactor=4.0,
+    #                                comparefunction=compareObjectID)
     catalog['mediums'] = mp.newMap(1000,
                                    maptype=mapLab,
                                    loadfactor=FactorCarga,
                                    comparefunction=compareMedium)
-    catalog['nationalities'] = mp.newMap(300, #hay 232 nacionalidades
-                                   maptype=mapLab,
-                                   loadfactor=FactorCarga,
+    catalog['nationalities'] = mp.newMap(250, 
+                                   maptype="CHAINING",
+                                   loadfactor=4.0,
                                    comparefunction=compareNationality)
-    catalog["Artists_BeginDate"] = mp.newMap(2000,
+    catalog["Artists_BeginDate"] = mp.newMap(2000, 
                                    maptype='CHAINING',
                                    loadfactor=4.0,
                                    comparefunction=compareBeginDate)
@@ -130,7 +130,7 @@ def addArtist(catalog, artist):
     Se añade el artista en mapa 
     """
     mp.put(catalog['artists'], artist['ConstituentID'], artist)
-    if len(artist["BeginDate"])==4: #Se ignoran si su fecha de nacimiento es vacía (no se añade al mapa de begindate)
+    if len(artist["BeginDate"])>1: #Se ignoran si su fecha de nacimiento es vacía (no se añade al mapa de begindate)
         addBeginDate(catalog,artist)
 
 def addBeginDate(catalog,artist): #req 1 MAPA
@@ -154,15 +154,16 @@ def addArtwork(catalog, artwork):
         artwork: obra de arte a añadir
     Se añade la obra de arte al mapa de artworks,mediums y nationalities
     """
-    mp.put(catalog['artworks'], artwork['ObjectID'], artwork)
-    medium =artwork['Medium']  # Se obtienen el medium
+    #mp.put(catalog['artworks'], artwork['ObjectID'], artwork)
+    lt.addLast(catalog["artworks"],artwork)
+    # medium =artwork['Medium']  # Se obtienen el medium
 
-    if mp.contains(catalog["mediums"],medium):
-        lt.addLast(mp.get(catalog["mediums"],medium)['value'],artwork)
-    else:
-        lista_inicial=lt.newList()
-        lt.addLast(lista_inicial,artwork)
-        mp.put(catalog["mediums"],medium,lista_inicial)
+    # if mp.contains(catalog["mediums"],medium):
+    #     lt.addLast(mp.get(catalog["mediums"],medium)['value'],artwork)
+    # else:
+    #     lista_inicial=lt.newList()
+    #     lt.addLast(lista_inicial,artwork)
+    #     mp.put(catalog["mediums"],medium,lista_inicial)
     addNationality(catalog,artwork) #req nacionalidades
     
 def addNationality(catalog,artwork):
@@ -253,7 +254,8 @@ def clasificarObrasNacionalidad(catalog):
     selection.sortEdit(nationalitiesQ,cmpNationalitiesSize,10,ordenarInicio=True,ordenarFinal=False)
     keyPrimerlugar=lt.getElement(nationalitiesQ,1)["Nacionalidad"]
     top10=lt.subList(nationalitiesQ,1,10)
-    return top10,keyPrimerlugar,nationalitiesQ #nationalitiesQ solamente para lab6, borrar después 
+    sizeNationalitiesQ=nationalitiesQ["size"]
+    return top10,keyPrimerlugar,nationalitiesQ,sizeNationalitiesQ #nationalitiesQ solamente para lab6, borrar después 
 
 def buscarNacionalidad(catalog,nacionalidad): #Edit laboratorio 6
     obrasNacionalidad=""

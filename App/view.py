@@ -37,7 +37,7 @@ operación solicitada
 """
 
 def printMenu():
-    print("Bienvenido")
+    print("-"*25+"Bienvenido"+ "-"*25)
     print("0- Cargar información en el catálogo")
     print("1- Listar cronólogicamente a artistas")
     print("2- Seleccionar n obras más antiguas para un medio específico")
@@ -83,19 +83,26 @@ while True:
     if inputs.isnumeric:
         if int(inputs[0]) == 0:
             print("\nCargando información de los archivos ....")
-            mapLab0=input("(Prueba) Selecione el mapa (1- 'CHAINING' 2-'PROBING')\n")
+            mapLab0=int(input("(Prueba) Selecione el mapa (1- 'CHAINING' 2-'PROBING')\n"))
             FactorCarga=float(input("Ingrese el factor de carga:  "))
             mapLab='PROBING'
             if mapLab0==1:
                 mapLab="CHAINING"
             catalog=initCatalog(mapLab,FactorCarga)
-            print("Se cargaron los mapas de Nacionalidad y Medios con "+mapLab+" Factor de carga: "+str(FactorCarga))
+            print("\n!!!!!! (PRUEBA) Se cargaron los mapas de Nacionalidad y Medios con "+mapLab+" Factor de carga: "+str(FactorCarga))
             loadData(catalog,nArtists=1948,nArtWork=768)
             print("\n\nSe ha completado la carga de artworks y artistas al catálogo")
-            print("Tamaño de mapa artworks: ",catalog["artworks"]["size"])
+            print("Tamaño de LISTA artworks: ",catalog["artworks"]["size"])
             print("Tamaño de mapa artistas: ",catalog["artists"]["size"])
-            print("Tamaño de mapa mediums: ",catalog["mediums"]["size"])
-            print("Tamaño de mapa nacionalidades: ",catalog["nationalities"]["size"])
+
+
+            print("\nTamaño de mapa mediums: ",catalog["mediums"]["size"])
+            print("Capacidad final mapa nacionalidades: ",catalog["mediums"]["capacity"])
+
+            print("\nTamaño de mapa nacionalidades: ",catalog["nationalities"]["size"])
+            print("Capacidad final mapa nacionalidades: ",catalog["nationalities"]["capacity"])
+            #catalog["Artists_BeginDate"]
+            print("\nTamaño de mapa fechas de nacimiento: ",catalog["Artists_BeginDate"]["size"])
         
         # Caso cuando no hay datos cargados
         elif catalog==None and int(inputs[0])!=7:
@@ -140,6 +147,7 @@ while True:
             if opcion==2:
                 print("\n--- Reto 2 ---")
                 print("\n Top 10 países por obras")
+                print("\n Total países: " + str(respuesta[3]))
                 print(respuesta[0])
                 i=1
                 for nationality in lt.iterator(respuesta[0]):
