@@ -78,7 +78,7 @@ def newCatalog(mapLab='CHAINING',FactorCarga=4.0):
                                    comparefunction=compareMedium)
     catalog['nationalities'] = mp.newMap(250, 
                                    maptype="CHAINING",
-                                   loadfactor=4.0,
+                                   loadfactor=2.0,
                                    comparefunction=compareNationality)
     catalog["Artists_BeginDate"] = mp.newMap(2000, 
                                    maptype='CHAINING',
