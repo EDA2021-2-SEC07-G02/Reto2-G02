@@ -32,11 +32,11 @@ El controlador se encarga de mediar entre la vista y el modelo.
 
 # Inicialización del Catálogo 
 
-def initCatalog(mapLab,FactorCarga):
+def initCatalog():
     """
     Llama la funcion de inicializacion del catalogo del modelo.
     """
-    catalog = model.newCatalog(mapLab,FactorCarga)
+    catalog = model.newCatalog()
     return catalog
 
 # Funciones para la carga de datos

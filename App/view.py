@@ -46,7 +46,7 @@ def printMenu():
 
 # Funciones de inicialización de catalogo y carga de datos
 catalog = None
-def initCatalog(mapLab,FactorCarga):
+def initCatalog():
     """
     Inicializa el catalogo de libros
 
@@ -56,7 +56,7 @@ def initCatalog(mapLab,FactorCarga):
     Retorno:
         Catalogo inicializado
     """
-    return controller.initCatalog(mapLab,FactorCarga)
+    return controller.initCatalog()
 
 def loadData(catalog,nArtists=6656,nArtWork=15008):
     """
@@ -83,13 +83,7 @@ while True:
     if inputs.isnumeric:
         if int(inputs[0]) == 0:
             print("\nCargando información de los archivos ....")
-            mapLab0=int(input("(Prueba) Selecione el mapa (1- 'CHAINING' 2-'PROBING')\n"))
-            FactorCarga=float(input("Ingrese el factor de carga:  "))
-            mapLab='PROBING'
-            if mapLab0==1:
-                mapLab="CHAINING"
-            catalog=initCatalog(mapLab,FactorCarga)
-            print("\n!!!!!! (PRUEBA) Se cargaron los mapas de Nacionalidad y Medios con "+mapLab+" Factor de carga: "+str(FactorCarga))
+            catalog=initCatalog()
             loadData(catalog,nArtists=1948,nArtWork=768)
             print("\n\nSe ha completado la carga de artworks y artistas al catálogo")
             print("Tamaño de LISTA artworks: ",catalog["artworks"]["size"])

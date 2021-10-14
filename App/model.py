@@ -43,7 +43,7 @@ los mismos.
 
 # Construccion de modelos
 
-def newCatalog(mapLab='CHAINING',FactorCarga=4.0):
+def newCatalog():
     # TODO: Documentación return
     """
     Inicializa el catálogo. Se crea dos mapas/indices, una de ellos para guardar a los artistas, 
@@ -72,13 +72,13 @@ def newCatalog(mapLab='CHAINING',FactorCarga=4.0):
     #                                maptype='CHAINING',
     #                                loadfactor=4.0,
     #                                comparefunction=compareObjectID)
-    catalog['mediums'] = mp.newMap(1000,
-                                   maptype=mapLab,
-                                   loadfactor=FactorCarga,
+    catalog['mediums'] = mp.newMap(25000,
+                                   maptype="CHAINING",
+                                   loadfactor=4.0,
                                    comparefunction=compareMedium)
     catalog['nationalities'] = mp.newMap(250, 
                                    maptype="CHAINING",
-                                   loadfactor=2.0,
+                                   loadfactor=4.0,
                                    comparefunction=compareNationality)
     catalog["Artists_BeginDate"] = mp.newMap(2000, 
                                    maptype='CHAINING',
