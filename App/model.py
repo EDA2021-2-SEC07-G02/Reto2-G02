@@ -35,6 +35,7 @@ from DISClib.Algorithms.Sorting import mergesort as ms
 from DISClib.Algorithms.Sorting import selectionsort as selection
 assert cf
 import time
+import re
 
 """
 Se define la estructura de un catálogo de videos. El catálogo tendrá dos listas, una para los videos, otra para las categorias de
@@ -84,6 +85,10 @@ def newCatalog():
                                    maptype='CHAINING',
                                    loadfactor=4.0,
                                    comparefunction=compareBeginDate)
+    catalog["Department"] = mp.newMap(15, 
+                                   maptype='PROBING',
+                                   loadfactor=0.5,
+                                   comparefunction=compareDepartment)
     return catalog
 
 def NewNationalityArt(pais):
@@ -99,7 +104,7 @@ def NewNationalityArt(pais):
                 "Artworks": None,
                 "Total_obras":0}
     nationality["Nationality"]=pais
-    nationality["Artworks"]=lt.newList()
+    nationality["Artworks"]=lt.newList("ARRAY_LIST")
     return nationality
 
 def newBeginDate(nacimiento):
@@ -114,7 +119,7 @@ def newBeginDate(nacimiento):
     BeginDate={"FechaNacimiento":"",
                 "Artistas":None}
     BeginDate["FechaNacimiento"]=int(nacimiento)
-    BeginDate["Artistas"]=lt.newList()
+    BeginDate["Artistas"]=lt.newList("ARRAY_LIST") ##EDIT CAMBIO DE LISTA
     return BeginDate
 
 
@@ -159,6 +164,10 @@ def addArtwork(catalog, artwork):
     addNationality(catalog,artwork) #req nacionalidades
     medium =artwork['Medium']  # Se obtienen el medium
     addMedium(catalog,medium,artwork)
+    try:
+        addDepartment(catalog,artwork)
+    except:
+        print("- No se puede agregar")
 
 def addMedium(catalog,medium,artwork):
     if mp.contains(catalog["mediums"],medium):
@@ -201,6 +210,29 @@ def addNationality(catalog,artwork):
         lt.addLast(nationalityMap["Artworks"],objectID) #Se añade solamente el objectID, preguntar si es necesario añadir toda la obra de arte
         nationalityMap["Total_obras"]+=1
 
+def addDepartment(catalog,artwork):
+    departamento=artwork["Department"]
+    objectID=artwork["ObjectID"]
+    altura=artwork["Height (cm)"]
+    ancho=artwork["Width (cm)"]
+    peso=artwork["Weight (kg)"]
+    profundidad=artwork["Depth (cm)"]
+    fecha=artwork["Date"]
+    cualidadesObra={"ObjectID":objectID,"Height (cm)":altura,
+                    "Width (cm)":ancho, "Weight (kg)":peso,
+                    "Depth (cm)":profundidad,"Date":fecha}
+    existDepartment=mp.contains(catalog["Department"],departamento)
+    if existDepartment:
+        entry=mp.get(catalog["Department"],departamento)
+        departmentMap=me.getValue(entry)
+    
+    else:
+        departmentMap={"Department":departamento,
+                        "Artworks":None}
+        departmentMap["Artworks"]=lt.newList("ARRAY_LIST")
+        mp.put(catalog["Department"],departamento,departmentMap)
+    
+    lt.addLast(departmentMap["Artworks"],cualidadesObra) #Se añade solamente el objectID, preguntar si es necesario añadir toda la obra de arte
 # Funciones para creacion de datos
 
 # Funciones de consulta
@@ -218,9 +250,92 @@ def listarArtistasCronologicamente(catalog,fechaInicial,fechaFinal):
     print("\nLista de nacimientos sin ordenar\n",listaNac)
     #ms.sort(listaNac,cmpArtistDate)
     print("\nSelection editado! solamente los 10 primeros y últimos lugares \n")
-    selection.sortEdit(listaNac,cmpArtistDate,10)
+    selection.sortEdit(listaNac,cmpArtistDate,10,ordenarInicio=True,ordenarFinal=True)
     print(listaNac)
-    return listaNac,contador
+    respuestaLista=None
+    try:
+        respuestaLista=listasRespuesta(listaNac,catalog,"Artists","req1")
+    except:
+        print("error")
+    return listaNac,contador,respuestaLista
+
+def listasRespuesta(lista,catalog,seccionCatalogo,requerimiento,elementosTotal=6,ordenarSoloInicio=True):
+    """
+    La función buscará los n primeros y últimos elementos de una lista,
+    los cuales se guardarán en una nueva array list que será usadada para
+    mostrar resultados al usuario en el view.
+    Parámetros:
+        lista
+        catalog
+        elementosTotal=6
+        seccionCatalogo: artists o artworks #'artists',
+                                            'artworks' 
+        requerimiento: se agregará info a los elementos dependiendo del requerimiento
+    """
+    listaRespuesta=lt.newList("ARRAY_LIST")
+    n=1
+    pos=1
+    recorrer=True
+    mitad=elementosTotal//2
+    print(lista)
+    precioTransporte=0
+    while recorrer:
+        elemento=lt.getElement(lista,pos)
+        print(n,"Pos:",pos,elemento)
+        if requerimiento=="req4" or requerimiento=="req5":
+            if requerimiento=="req5":
+                precioTransporte=elemento["TransCost (USD)"]
+                elemento=elemento["ObjectID"]
+            for obra in lt.iterator(catalog["artworks"]):
+                if elemento==obra["ObjectID"].strip(): #Codigo obra
+                    constituentID=obra["ConstituentID"][1:-1] #se obtiene el constituentID que relaciona una obra con un artista
+                    codigoNum=constituentID.split(",")
+                    for ID in codigoNum:
+                        artist=mp.get(catalog["artists"],ID.strip())["value"]["DisplayName"]
+                        obra["NombresArtistas"]=artist+","
+                    obra["TransCost (USD)"]=precioTransporte
+                    lt.addLast(listaRespuesta,obra)
+                    n+=1
+                    print(n,elemento)
+                    break
+
+        elif requerimiento=="req1":
+            artistasLista=mp.get(catalog["Artists_BeginDate"],str(elemento))["value"]["Artistas"]
+            print("ARTISTAS LISTA",artistasLista)
+                #print(artistasLista)
+            for artista in lt.iterator(artistasLista):
+                if pos==0:
+                    pos=lista["size"]
+
+                if n==mitad+1 and pos==1: #Para no quedarse solamente en el primer año en caso de que tenga muchos artistas
+                    print("NO MORE",artista,n)
+                    break
+                elif n>elementosTotal and pos==lista["size"]:
+                    print("NO MORE END",artista,n)
+                    recorrer=False
+                    break
+                else:
+                    artista=mp.get(catalog["artists"],artista)["value"]
+                    lt.addLast(listaRespuesta,artista)
+                    n+=1
+                    
+               
+        # if n==mitad:
+        #     pos=lista["size"]
+        
+        if n>elementosTotal or n>lista["size"]:
+            recorrer=False
+        
+        if n<mitad or requerimiento=="req5":
+            pos+=1
+        elif n==mitad:
+            pos=lista["size"]
+        else:
+            pos-=1
+        #n+=1
+        
+    return listaRespuesta
+        
 
 def obrasMasAntiguas(catalog,medio,n):
     res=""
@@ -259,9 +374,21 @@ def clasificarObrasNacionalidad(catalog):
     keyPrimerlugar=lt.getElement(nationalitiesQ,1)["Nacionalidad"]
     top10=lt.subList(nationalitiesQ,1,10)
     sizeNationalitiesQ=nationalitiesQ["size"]
-    return top10,keyPrimerlugar,nationalitiesQ,sizeNationalitiesQ #nationalitiesQ solamente para lab6, borrar después 
 
-def buscarNacionalidad(catalog,nacionalidad): #Edit laboratorio 6
+    #Respuesta con 6 obras
+    listaObrasPrimerL=mp.get(catalog["nationalities"],keyPrimerlugar)["value"]["Artworks"]
+    #Obras únicas primer lugar
+    obrasUnicas=lt.newList("ARRAY_LIST")
+    for obra in lt.iterator(listaObrasPrimerL):
+        existeObra=lt.isPresent(obrasUnicas,obra)
+        if existeObra==0:
+            lt.addLast(obrasUnicas,obra)
+    sizeObrasUnicas=obrasUnicas["size"]
+    rtaNElementos=listasRespuesta(obrasUnicas,catalog,"Artworks","req4")
+    ms.sort(rtaNElementos,cmpArtworkByDateAcquired) #Discord 11-10 octubre, ordenar por fecha de adquisición
+    return top10,keyPrimerlugar,nationalitiesQ,sizeNationalitiesQ,rtaNElementos,sizeObrasUnicas #nationalitiesQ solamente para lab6, borrar después 
+
+def buscarNacionalidad(catalog,nacionalidad): #Edit laboratorio 6 borrarrrrrrrr
     obrasNacionalidad=""
     existNationality=mp.contains(catalog["nationalities"],nacionalidad)
     if existNationality:
@@ -271,6 +398,67 @@ def buscarNacionalidad(catalog,nacionalidad): #Edit laboratorio 6
     else:
         obrasNacionalidad="La nacionalidad no existe"
     return obrasNacionalidad
+
+def transportarObrasDespartamento(catalog,departamento): # Requerimiento Grupal 5: Función Principal
+    """
+    La función indica el precio total de envío que cuesta transportar un departamento. Entrega también una
+    lista que contiene las obras que se van a transportar y el precio de transportar cada obra. Los precios
+    se establecen de acuerdo a 
+
+    Parámetros: 
+        catalog: catalogo con obras y artistas
+        departamento: nombre del departamento a transportar
+    Retorno:
+        precioSortedList: lista de obras organizadas por precio
+        obrasDepartamento: lista de obras organizadas por fecha de antiguedad 
+        precioTotalEnvio: costo total de transportar las obras
+        pesoTotal: peso total de las obras
+        cantidadDeObras: cantidad de obras a transportar
+    """
+
+    # Constantes
+    PRECIO_ENVIO_UNIDAD=72
+    PRECIO_ENVIO_FIJO=48
+    precioTotalEnvio=0
+    pesoTotal=0
+    exisDepartamento=mp.contains(catalog["Department"],departamento)
+    if exisDepartamento:
+        obrasDepartamento=mp.get(catalog["Department"],departamento)["value"]["Artworks"]
+        for obra in lt.iterator(obrasDepartamento):
+            altura=obra["Height (cm)"]
+            ancho=obra["Width (cm)"]
+            peso=obra["Weight (kg)"]
+            profundidad=obra["Depth (cm)"]
+            precioPorPeso=0
+            precioPorM2=0
+            precioPorM3=0
+            precioPorPeso=PRECIO_ENVIO_UNIDAD/100
+            if peso.isnumeric(): #KG   #se comprueba que peso no sea una cadena vacia 
+                precioPorPeso=PRECIO_ENVIO_UNIDAD*(float(peso)/100) #if len(peso)>0 else 0
+                pesoTotal+=peso
+            #Se comprueban si cada una de las medidas es una cadena de str vacía. Si alguno de ellos es verdad se cambia a 100 dado que son cm
+            if len(altura)==0:
+                altura=100
+            if len(ancho)==0:
+                ancho=100
+            if len(profundidad)==0:
+                profundidad=100
+            precioPorM2=PRECIO_ENVIO_UNIDAD*(float(altura)/100)*(float(ancho)/100) #if len(peso)>0 else 0
+            precioPorM3=PRECIO_ENVIO_UNIDAD*(float(altura)/100)*(float(ancho)/100)*(float(profundidad)/100) #if len(peso)>0 else 0
+            precioEnvio=max(precioPorM2,precioPorM3,precioPorPeso)
+            if precioEnvio==0:
+                precioEnvio=PRECIO_ENVIO_FIJO
+            obra["TransCost (USD)"]=precioEnvio
+            precioTotalEnvio+=precioEnvio
+    
+    size=obrasDepartamento["size"]
+    obrasDeptoCopy=lt.subList(obrasDepartamento,0,size) #se copia la lista 
+    precioSorted=lt.subList((selection.sortEdit(obrasDeptoCopy,cmpArtworkByPrice,5)),1,5)
+    fechaSorted=lt.subList((selection.sortEdit(obrasDepartamento,cmpArtworkByDate,5)),1,5)#lista ordenada por fecha
+    respuestaLPrecio=listasRespuesta(precioSorted,catalog,"",requerimiento="req5",elementosTotal=5)
+    respuestaLFecha=listasRespuesta(fechaSorted,catalog,"",requerimiento="req5",elementosTotal=5)
+    return precioTotalEnvio, pesoTotal,respuestaLFecha,respuestaLPrecio,size
+
 
 def contarTiempo(start_time,stop_time):
     # start_time = time.process_time()
@@ -346,6 +534,21 @@ def compareConsIDArtist(consIDArtist, entry): #MAPA
     else:
         return -1
 
+def cmpArtworkByDateAcquired(artwork1, artwork2): # Requerimiento Grupal 2: Función Comparación Ordenamiento
+    """ 
+    Compara las fechas de dos obras de arte
+    Parámetros: 
+        artwork1: informacion de la primera obra que incluye su valor 'DateAcquired'
+        artwork2: informacion de la segunda obra que incluye su valor 'DateAcquired'
+    Retorno:
+        Devuelve verdadero (True) si artwork1 es menor en fecha que artwork2, si tienen la misma 
+        fecha retorna falso (False)
+    """
+    fecha1=time.strptime(artwork1["DateAcquired"],"%Y-%m-%d")
+    fecha2=time.strptime(artwork2["DateAcquired"],"%Y-%m-%d")
+    comparacion=fecha1<fecha2
+    return comparacion
+
 def compareObjectID(ObjectID, entry): #MAPA
     """
     Compara dos ObjectID de artworks, ObjectID es un identificador
@@ -371,6 +574,34 @@ def compareNationality(Nationality, entry):
         return 1
     else:
         return -1
+
+def compareDepartment(Department, entry):
+    """
+    Compara dos departamentos del museo.
+    Department es un identificador y entry una pareja llave-valor
+    """
+    identry = me.getKey(entry)
+    if Department == identry:
+        return 0
+    elif Department > identry:
+        return 1
+    else:
+        return -1
+
+
+def cmpArtworkByPrice(obra1,obra2): # Requerimiento Grupal 5: Función Comparación Ordenamiento
+    """
+    Función de comparación por el costo de transporte de artworks.
+    Parámetros:
+        obra1: primera obra, contiene el valor "TransCost (USD)"
+        obra2: segunda obra, contiene el valor "TransCost (USD)"
+    Retorno:
+        True si la obra1 tiene un costo en USD mayor que la obra2
+    """
+    return obra1["TransCost (USD)"]>obra2["TransCost (USD)"] # orden descendentes
+
+
+
 def compareBeginDate(Date, entry): #MAPA
     """
     Compara dos ObjectID de artworks, ObjectID es un identificador

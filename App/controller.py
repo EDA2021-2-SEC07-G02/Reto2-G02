@@ -54,7 +54,7 @@ def loadArtists(catalog,nArtists=6656):
     """
     Carga los artistas en una lista dado un nombre de archivo
     """
-    artistsFilename = cf.data_dir + 'MoMA\\Artists-utf8-large.csv'
+    artistsFilename = cf.data_dir + 'MoMA\\Artists-utf8-small.csv'
     inputFile= csv.DictReader(open(artistsFilename, encoding='utf-8'))
     #bar =tqdm(desc="..Carga artistas: ",total=nArtists)
     start_time = time.process_time()
@@ -69,7 +69,7 @@ def loadArtworks(catalog,nArtWork=15008):
     """
     Carga las obras en una lista dado un nombre de archivo
     """
-    artworksFilename = cf.data_dir + 'MoMA\\Artworks-utf8-large.csv'
+    artworksFilename = cf.data_dir + 'MoMA\\Artworks-utf8-small.csv'
     inputFile= csv.DictReader(open(artworksFilename, encoding='utf-8'))
     #bar =tqdm(desc="..Carga Artworks: ",total=nArtWork)
     start_time = time.process_time()
@@ -99,6 +99,9 @@ def clasificarObrasNacionalidad(catalog):
 
 def buscarNacionalidad(catalog,nacionalidad):
     return model.buscarNacionalidad(catalog,nacionalidad)
+
+def transportarObrasDespartamento(catalog,departamento):
+    return model.transportarObrasDespartamento(catalog,departamento)
 
 def contarTiempo(start_time,stop_time):
     return model.contarTiempo(start_time,stop_time)
