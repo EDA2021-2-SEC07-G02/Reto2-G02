@@ -235,7 +235,7 @@ def printPrettyTable(lista, keys, field_names, max_width, sample=3, ultimas=Fals
         cont+=1
     
     if ultimas:
-        ultimo_index=lt.size(lista)
+        ultimo_index=lt.size(lista) # aRRAY LIST
         cont2=1
         while cont2<=sample:
             indice=ultimo_index-sample+cont2
@@ -263,6 +263,7 @@ def printRequerimiento2(resultado):
                             "Dimensions","Date","DateAcquired","URL"]
         
         print("\nEl total de obras en el rango de fechas "+fechaInicial+" - "+fechaFinal+" es: "+str(resultado[2]))
+        print("\nEl total de diferentes artistas para la obras seleccionadas en el rango: "+str(resultado[3]))
         print("\nEl total de obras compradadas ('Purchase') en el rango de fechas "+fechaInicial+" - "+fechaFinal+" es: "+str(resultado[1]))
         print("\nLas tres primeras y tres ultimas obras del rango se registran en la siguiente tabla:")
 
@@ -272,7 +273,62 @@ def printRequerimiento2(resultado):
         print("\nNo  existe ninguna obra en las base de datos que haya sido registrada entre",fechaInicial,"y",fechaFinal,"o las fechas ingresadas no siguen el formato correcto.")
     controller.limpiarVar(resultado) #Se borra el resultado - Dato provisional
 
+def printMediums(ord_mediums,top=5):
+    medPretty=PrettyTable(hrules=prettytable.ALL)
+    medPretty.field_names=["Tecnica","Cantidad"]
+    medPretty.align="l"
+    medPretty._max_width = {"Tecnica" : 15, "Cantidad" : 5}
+    cont=0
+    for tecnica in lt.iterator(ord_mediums):
+        nombreTecnica=lt.getElement(tecnica,0)["Medium"]
+        medPretty.add_row((nombreTecnica,str(lt.size(tecnica))))
+        cont+=1
+        if(cont>=top):
+            break
+    print(medPretty)
 
+def printRequerimiento3(respuesta,nombreArtista):
+    tecnicas=respuesta[0]
+    totalObras=respuesta[1]
+    if totalObras!=0:
+        obrasTecnica=lt.getElement(tecnicas,0)
+        tecnica=lt.getElement(obrasTecnica,0)["Medium"]
+        print("El artista",str(nombreArtista),"tiene",totalObras,"obras en total. De las",lt.size(tecnicas),"ténicas empleadas la más utilizada es",\
+            str(tecnica)+".\n")
+        print("La lista de las 5 técnica más utilizadas")
+
+        printMediums(tecnicas)
+
+
+        print("\nA continuación se presentan 3 primera obras y 3 ultimas obras realizadas con la técnica",str(tecnica)+":")
+
+        keys=["ObjectID","Title","Medium","Date","Dimensions",
+                            "DateAcquired","Department","Classification","URL"]
+        fieldNames=["ObjectID","Title","Medium","Date","Dimensions",
+                            "DateAcquired","Department","Classification","URL"]
+        maxWidth = {"ObjectID" : 10, "Title" : 15,"Medium":13,
+                            "Date":12,"Dimensions":15,"DateAcquired":11,"Department":10,"Classification":10,"URL":10}
+
+        printPrettyTable(obrasTecnica,keys,fieldNames,maxWidth,sample=3,ultimas=True)
+    else:
+        print("El artista",nombreArtista,"no existe en la base de datos o no tiene ninguna obra registrada.")
+
+def printRequerimiento6(respuesta,fecha_inicial,fecha_final,n):
+    artistas=respuesta[0]
+    numArtistas=respuesta[1]
+    if(numArtistas>0):
+        print("\n Hay",numArtistas,"en el periodo de",str(fecha_inicial),"a",str(fecha_final))
+        print("\nLos",str(n),"artistas más prolíficos son:")
+        keys=["ConstituentID","DisplayName","BeginDate","Gender","ArtistBio",
+                            "Wiki QID","ULAN","ArtworkNumber","MediumNumber","TopMedium"]
+        fieldNames=["ConstituentID","DisplayName","BeginDate","Gender","ArtistBio",
+                            "Wiki QID","ULAN","ArtworkNumber","MediumNumber","TopMedium"]
+        maxWidth = {"ConstituentID":10,"DisplayName":10,"BeginDate":5,"Gender":5,"ArtistBio":10,
+                            "Wiki QID":5,"ULAN":10,"ArtworkNumber":5,"MediumNumber":5,"TopMedium":5}
+        printPrettyTable(artistas,keys,fieldNames,maxWidth,sample=n,ultimas=False)
+
+    else:
+        print("\nNo hay artistas en el rango seleccionado")
 
 
 """
@@ -340,9 +396,9 @@ while True:
         
         elif int(inputs[0]) == 3:
             tiempoInicial=time.process_time()
-            medio=input("Ingrese el medio: ")
-            n=int(input("Ingrese la cantidad de obras a seleccionar: "))
-            print(controller.obrasMasAntiguas(catalog,medio,n))
+            nombre=input("Ingrese el nombre del artista: ")
+            resultado= controller.tecnicasObrasPorArtista(catalog,nombre)
+            printRequerimiento3(resultado,nombre)
 
 
             pass
@@ -394,6 +450,14 @@ while True:
                 printTableTransPricesArtworks(listaObrasDepartamentoPrecio," COSTOSAS ")
             else:
                 print("El departamento",nombreDepartamento,"no existe o no tiene obras registradas.")
+
+        elif int(inputs[0]) == 6:
+            tiempoInicial=time.process_time()
+            n=int(input("Ingrese el top (#) de artistas más prolíficos: "))
+            fechaInicial=int(input("Ingrese el limite inferior del año de nacimiento (AAAA): "))
+            fechaFinal=int(input("Ingrese el limite superior del año de nacimiento (AAAA): "))
+            resultado= controller.artistasMasProlificos(catalog,fechaInicial,fechaFinal,n)
+            printRequerimiento6(resultado,fechaInicial,fechaFinal,n)
 
 
 

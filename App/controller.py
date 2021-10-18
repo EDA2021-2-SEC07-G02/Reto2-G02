@@ -54,7 +54,7 @@ def loadArtists(catalog,nArtists=6656):
     """
     Carga los artistas en una lista dado un nombre de archivo
     """
-    artistsFilename = cf.data_dir + 'MoMA\\Artists-utf8-small.csv'
+    artistsFilename = cf.data_dir + 'MoMA\\Artists-utf8-large.csv'
     inputFile= csv.DictReader(open(artistsFilename, encoding='utf-8'))
     #bar =tqdm(desc="..Carga artistas: ",total=nArtists)
     start_time = time.process_time()
@@ -69,7 +69,7 @@ def loadArtworks(catalog,nArtWork=15008):
     """
     Carga las obras en una lista dado un nombre de archivo
     """
-    artworksFilename = cf.data_dir + 'MoMA\\Artworks-utf8-small.csv'
+    artworksFilename = cf.data_dir + 'MoMA\\Artworks-utf8-large.csv'
     inputFile= csv.DictReader(open(artworksFilename, encoding='utf-8'))
     #bar =tqdm(desc="..Carga Artworks: ",total=nArtWork)
     start_time = time.process_time()
@@ -98,6 +98,13 @@ def listarAdquisicionesCronologicamente(catalog,fechaInicial,fechaFinal):
     """
     return model.listarAdquisicionesCronologicamente(catalog,fechaInicial,fechaFinal)
 
+def tecnicasObrasPorArtista(catalog, nombre):
+    """
+    Retorna las técnicas usadas en obras de acuerdo a un artista en específico, junto al total de obras del
+    artista y su técnica más usada y su listado de obras
+    """
+    return model.tecnicasObrasPorArtista(catalog,nombre)
+
 # TODO: ELiminar, esto era de lab antiguo
 # def obrasMasAntiguas(catalog,medio,n):
 #     return model.obrasMasAntiguas(catalog,medio,n)
@@ -110,6 +117,9 @@ def buscarNacionalidad(catalog,nacionalidad):
 
 def transportarObrasDespartamento(catalog,departamento):
     return model.transportarObrasDespartamento(catalog,departamento)
+
+def artistasMasProlificos(catalog,fecha_inicio,fecha_final,n):
+    return model.artistasMasProlificos(catalog,fecha_inicio,fecha_final,n)
 
 def contarTiempo(start_time,stop_time):
     return model.contarTiempo(start_time,stop_time)

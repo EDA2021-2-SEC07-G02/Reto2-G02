@@ -177,24 +177,11 @@ def addArtwork(catalog, artwork):
         listaIndicesArtwork=lt.newList("ARRAY_LIST")
         lt.addLast(listaIndicesArtwork,lt.size(catalog["artworks"]))
         mp.put(catalog["artworks_index_by_initial_year"],initialYear,listaIndicesArtwork)  
-    # TODO: Revisar esto antes de enviar
-    # Si nos dejan matamos a este mapa xd
-    # medium =artwork['Medium']  # Se obtienen el medium
-    # addMedium(catalog,medium,artwork)
+        
     try:
         addDepartment(catalog,artwork)
     except:
         print("- No se puede agregar")  # TODO: Borrar print
-
-# TODO: Revisar esto antes de enviar
-# Si nos dejan eliminamos este mapa
-# def addMedium(catalog,medium,artwork):
-#     if mp.contains(catalog["mediums"],medium):
-#         lt.addLast(mp.get(catalog["mediums"],medium)['value'],artwork)
-#     else:
-#         lista_inicial=lt.newList()
-#         lt.addLast(lista_inicial,artwork)
-#         mp.put(catalog["mediums"],medium,lista_inicial)
 
 
 
@@ -316,11 +303,18 @@ def listarAdquisicionesCronologicamente(catalog,fechaInicial,fechaFinal):  # Req
     """
 
     contadorPurchase=0
+    
+    
 
     yearInitial=int(fechaInicial.split("-")[0])
     yearFinal=int(fechaFinal.split("-")[0])
     inicial=time.strptime(fechaInicial,"%Y-%m-%d")
     final=time.strptime(fechaFinal,"%Y-%m-%d")
+
+    artistas=mp.newMap((yearFinal-yearInitial)*10, 
+                                   maptype="CHAINING",
+                                   loadfactor=4.0)
+
 
     # Caso año inicial
     listaAdquisiciones=lt.newList('ARRAY_LIST')
@@ -329,9 +323,9 @@ def listarAdquisicionesCronologicamente(catalog,fechaInicial,fechaFinal):  # Req
         for index_artwork in lt.iterator(listaArtworkYearIni):
             artw=lt.getElement(catalog["artworks"],index_artwork)
             if inicial<=time.strptime(artw["DateAcquired"],"%Y-%m-%d"):
-               artw["ArtistsNames"]=nombresArtistas(catalog,artw["ConstituentID"])
+               artw["ArtistsNames"]=nombresArtistas(catalog,artw["ConstituentID"],artistas)
                lt.addLast(listaAdquisiciones,artw)
-               if artw["CreditLine"].startswith("Purchase"):
+               if "purchase" in artw["CreditLine"].lower():
                         contadorPurchase+=1
         listaAdquisiciones=sortList(listaAdquisiciones,cmpArtworkByDateAcquired)
     
@@ -343,13 +337,13 @@ def listarAdquisicionesCronologicamente(catalog,fechaInicial,fechaFinal):  # Req
             listaArtworkYear=mp.get(catalog["artworks_index_by_initial_year"],year)["value"]
             for index_artwork in lt.iterator(listaArtworkYear):
                 artw=lt.getElement(catalog["artworks"],index_artwork)
-                artw["ArtistsNames"]=nombresArtistas(catalog,artw["ConstituentID"])
+                artw["ArtistsNames"]=nombresArtistas(catalog,artw["ConstituentID"],artistas)
                 lt.addLast(lista,artw)
             
             lista=sortList(lista,cmpArtworkByDateAcquired)
             for artwork in lt.iterator(lista):
                 lt.addLast(listaAdquisiciones,artwork)
-                if artwork["CreditLine"].startswith("Purchase"):
+                if "purchase" in artwork["CreditLine"].lower():
                         contadorPurchase+=1
         year+=1
     
@@ -359,22 +353,22 @@ def listarAdquisicionesCronologicamente(catalog,fechaInicial,fechaFinal):  # Req
         listaArtworkYearFin=mp.get(catalog["artworks_index_by_initial_year"],yearFinal)["value"]
         for index_artwork in lt.iterator(listaArtworkYearFin):
             artw=lt.getElement(catalog["artworks"],index_artwork)
-            artw["ArtistsNames"]=nombresArtistas(catalog,artw["ConstituentID"])
             if final>=time.strptime(artw["DateAcquired"],"%Y-%m-%d"):
+               artw["ArtistsNames"]=nombresArtistas(catalog,artw["ConstituentID"],artistas)
                lt.addLast(listaFinal,artw)
         listaFinal=sortList(listaFinal,cmpArtworkByDateAcquired)
         for artwork in lt.iterator(listaFinal):
                 lt.addLast(listaAdquisiciones,artwork)
-                print(artwork["DateAcquired"])
-                if artwork["CreditLine"].startswith("Purchase"):
+                if "purchase" in artwork["CreditLine"].lower():
                         contadorPurchase+=1
 
-    return listaAdquisiciones, contadorPurchase, lt.size(listaAdquisiciones)
+    return listaAdquisiciones, contadorPurchase, lt.size(listaAdquisiciones), lt.size(mp.valueSet(artistas))
 
-def nombresArtistas(catalog,consIDs):
+def nombresArtistas(catalog,consIDs,artistas):
     listaConsID=consIDs.strip("[]").replace(" ","").split(",")
     resp=""
     for consID in listaConsID:
+        mp.put(artistas,consID,consID)
         if(mp.contains(catalog["artists"],consID)):
             resp+=mp.get(catalog["artists"],consID)["value"]["DisplayName"]+", "
     return resp[:-2]
@@ -407,7 +401,8 @@ def tecnicasObrasPorArtista(catalog,nombre): # Requerimiento Individual 3: Funci
                 lt.addLast(lt.lastElement(tecnicas),obraArtista) # añade la lista de obras de esa tecnica
         # sortedList=sortList(tecnicas,cmpFunctionTecnicasArtista,sortType) # utiliza la función de comparación con orden ascendente
     totalObras=lt.size(obras) # retorna el número total de obras
-    return tecnicas,totalObras # TODO: Falta organizar las tecnicasss
+    tecnicas=sortList(tecnicas,cmpFunctionTecnicasArtista)
+    return tecnicas,totalObras,lt.getElement(lt.getElement(tecnicas,0),0)["Medium"] # TODO: Falta organizar las tecnicasss
         
 
 def clasificarObrasNacionalidad(catalog): # Requerimiento 4 TODO: Colocar si es la función principal o no
@@ -525,48 +520,61 @@ def artistasMasProlificos(catalog,fecha_inicio,fecha_final,numero_artistas): # R
     # TODO: Documentación
     llavesArtistas=mp.keySet(catalog["artists"])
     llavesArtistas=lt.subList(llavesArtistas,0,lt.size(llavesArtistas)) 
-    gruposArtistas=lt.newList()
+    gruposArtistas=lt.newList("ARRAY_LIST")
     numeroMaximo=0
 
+    primerRecorrido=True
+    numeroArtistasRango=0
+
     while numeroMaximo<numero_artistas:
-        listaArtistas=lt.newList()
+        listaArtistas=lt.newList("ARRAY_LIST")
         maxObras=-1
+        contLlaves=1
         for consID in lt.iterator(llavesArtistas):
             artista=mp.get(catalog["artists"],consID)["value"]
-            if fecha_inicio>artista["BeginDate"] and fecha_final>artista["BeginDate"]:
+            if fecha_inicio<int(artista["BeginDate"]) and fecha_final>int(artista["BeginDate"]):
+                if(primerRecorrido):
+                    numeroArtistasRango+=1
                 numero_obras=lt.size(artista["artwork_index_list"])
                 if numero_obras>maxObras:
                     maxObras=numero_obras
-                    listaArtistas=lt.newList()
-                    artista["CantObras"]=numero_obras
-                    artista["posicionListaLLaves"]=lt.size(listaArtistas)
+                    listaArtistas=lt.newList("ARRAY_LIST")
+                    artista["ArtworkNumber"]=numero_obras
+                    artista["posicionListaLLaves"]=contLlaves
                     lt.addLast(listaArtistas,artista)
                 elif numero_obras==maxObras:
-                    artista["CantObras"]=numero_obras
-                    artista["posicionListaLLaves"]=lt.size(listaArtistas)
+                    artista["ArtworkNumber"]=numero_obras
+                    artista["posicionListaLLaves"]=contLlaves
                     lt.addLast(listaArtistas,artista)
+            contLlaves+=1
 
         for artistaASacar in lt.iterator(listaArtistas):
             lt.deleteElement(llavesArtistas,artistaASacar["posicionListaLLaves"])
 
         numeroMaximo+=lt.size(listaArtistas)
+        print(listaArtistas)
         lt.addLast(gruposArtistas,listaArtistas)
 
-    artistasMasProlificos=lt.newList()
+    artistasMasProlificos=lt.newList("ARRAY_LIST")
 
     for listaArtistasG in lt.iterator(gruposArtistas):
         for artista in lt.iterator(listaArtistasG):
             resultado=tecnicasObrasPorArtista(catalog,artista["DisplayName"])
+
             cantidadTecnicas=lt.size(resultado[0])
-            artista["cantTecnicas"]=cantidadTecnicas
+            artista["MediumNumber"]=cantidadTecnicas
+            artista["ObrasTopMedium"]=lt.firstElement(resultado[0])
+            artista["TopMedium"]=resultado[2]
+
         listaArtistasSorted=sortList(listaArtistasG,cmpCantMedios)
         for artistaS in lt.iterator(listaArtistasSorted):
             lt.addLast(artistasMasProlificos,artistaS)
+        
     
-    if lt.size(artistasMasProlificos>numero_artistas):
+    if lt.size(artistasMasProlificos)>numero_artistas:
         artistasMasProlificos=lt.subList(artistasMasProlificos,0,numero_artistas)
     
-    return artistasMasProlificos
+    return artistasMasProlificos, numeroArtistasRango
 
 
 
@@ -592,8 +600,22 @@ def artistasMasProlificos(catalog,fecha_inicio,fecha_final,numero_artistas): # R
 #     else:
 #         return -1
 
+def cmpFunctionTecnicasArtista(tecnica1,tecnica2): # Requerimiento Individual 3: Función Comparación Ordenamiento
+    """ 
+    Compara dos técnicas por su cantiadad de obras
+    Parámetros: 
+        tecnica1: lista de obras de una tecnica
+        tecnica2: lista de obras de otra tecnica
+    Retorno:
+        retorna verdader (True) si la lista tecnica 1 tiene más elementos que la lista de la tecnica 2
+    """
+    if lt.size(tecnica1)>lt.size(tecnica2): # comparación con orden ascendente
+        return True
+    else:
+        return False
+
 def cmpCantMedios(artista1,artista2): # Comparación Requerimiento 6
-    return artista1["cantTecnicas"]<artista2["cantTecnicas"]
+    return artista1["MediumNumber"]>artista2["MediumNumber"]
 
 
 def compareMedium(mediumName, entry):
@@ -868,20 +890,3 @@ def limpiarVar(dato):
     dato=None
     return dato
 
-# ELIMINAR
-
-
-def obrasMasAntiguas(catalog,medio,n): # TODO: Eliminar este requerimiento era del lab
-
-    res=""
-    if mp.contains(catalog["mediums"],medio):
-        lista_a_ordenar=mp.get(catalog["mediums"],medio)['value']
-        lista_ordenada=ms.sort(lista_a_ordenar,cmpArtworkByDate)
-        cont=1
-        for obra in lt.iterator(lista_ordenada):
-            res+=str(cont)+". Obra: "+obra["Title"]+"\n"
-            res+="Fecha Obra: "+obra["Date"]+"\n\n"
-            cont+=1
-            if cont>n:
-                break
-    return res
