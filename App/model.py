@@ -177,7 +177,7 @@ def addArtwork(catalog, artwork):
         listaIndicesArtwork=lt.newList("ARRAY_LIST")
         lt.addLast(listaIndicesArtwork,lt.size(catalog["artworks"]))
         mp.put(catalog["artworks_index_by_initial_year"],initialYear,listaIndicesArtwork)  
-        
+
     try:
         addDepartment(catalog,artwork)
     except:
@@ -490,7 +490,7 @@ def transportarObrasDespartamento(catalog,departamento): # Requerimiento Grupal 
             precioPorM3=0
             precioPorPeso=PRECIO_ENVIO_UNIDAD/100
             if peso.isnumeric(): #KG   #se comprueba que peso no sea una cadena vacia 
-                precioPorPeso=PRECIO_ENVIO_UNIDAD*(float(peso)/100) #if len(peso)>0 else 0
+                precioPorPeso=PRECIO_ENVIO_UNIDAD*(float(peso)) #if len(peso)>0 else 0
                 pesoTotal+=peso
             #Se comprueban si cada una de las medidas es una cadena de str vacía. Si alguno de ellos es verdad se cambia a 100 dado que son cm
             if len(altura)==0:
