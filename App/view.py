@@ -72,8 +72,9 @@ def loadData(catalog,nArtists=6656,nArtWork=15008):
     Retorno:
         Catalogo cardgado con obras y artistas
     """
+    controller.loadData(catalog,nArtists,nArtWork)
     try:
-        controller.loadData(catalog,nArtists,nArtWork)
+        pass
     except:
         print("Error en la carga de información, verifique que los archivos de la base de dato estén en el\
             directorio correcto")
