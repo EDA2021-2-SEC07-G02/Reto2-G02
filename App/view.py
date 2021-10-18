@@ -81,81 +81,8 @@ def loadData(catalog,nArtists=6656,nArtWork=15008):
 
 ##PrettyTable
 
-def printNationalityArt(ord_Nationality):
-    """
-    Imprime los resultados del requerimiento 4
 
-    Parámetros:
-        ord_Nationality:lista con países y sus obras de arte
-    
-    print(NationalityPretty) >> Imprime la tabla hecha por medio de PrettyTable
-    controller.limpiarVar(NationalityPretty) >> Limpia la tabla hecha (dato provisional)
-    """
-    NationalityPretty=PrettyTable(hrules=prettytable.ALL)
-    NationalityPretty.field_names=["Nationality","ArtWorks"]
-    NationalityPretty.align="l"
-    NationalityPretty._max_width = {"Nationality" : 15, "ArtWorks" : 5}
-    for nationality in lt.iterator(ord_Nationality):
-        NationalityPretty.add_row((nationality["Nacionalidad"],nationality["Total_obras"]))
-    print(NationalityPretty)
-
-def printResultsArt(ord_artwork, cadenaOpcion, sample=3):
-    """
-    Esta función es usada para mostrar a las 3 primeras y últimas obras 
-    en distintas opciones del view. 
-    
-    Parámetros:
-        ord_artwork: Catalogo de obras de arte (Cargado por catalogo en la opción 1 o ordenado por fechas de la opción 3)
-        sample: Hace referencia a la cantidad de primeras y últimas obras que se quieren mostrar al usuario. 
-                Su valor predeterminado es 3 por requisitos del proyecto.
-        cadenaOpcion: Es usado para imprimir si las obras fueron cargadas o ordenadas 
-    
-    print(artPretty) >> Imprime la tabla
- 
-    """
-    artPretty=PrettyTable(hrules=prettytable.ALL)
-    artPretty.field_names=["ObjectID","Title","Artists Names","Medium",
-                            "Dimensions","Date","DateAcquired","URL"]
-    artPretty.align="l"
-    artPretty._max_width = {"ObjectID" : 10, "Title" : 15,"Artists Names":16,"Medium":13,
-                            "Dimensions":15,"Date":12,"DateAcquired":11,"URL":10}
-    
-    for artwork in lt.iterator(ord_artwork):
-        dispname_artwork=artwork["NombresArtistas"][0:-1]
-        artPretty.add_row((artwork['ObjectID'],artwork['Title'],dispname_artwork,artwork['Medium'],
-                        artwork['Dimensions'],artwork['Date'],artwork['DateAcquired'],artwork['URL']))
-    print(artPretty)
-
-def printResultsArtists(ord_artist, sample=3):
-    """
-    Esta función es usada para mostrar a los 3 primeros y últimos artistas 
-    en distintas opciones del view. 
-    
-    Parámetros:
-        ord_artist: Catalogo de artistas
-        sample: Hace referencia a la cantidad de primeras y últimas artistas que se quieren mostrar al usuario.
-                Su valor predeterminado es 3 por requisitos del proyecto.
-        cadenaOpcion: Es usado para imprimir si los artistas fueron cargados al catalogo o ordenadas 
-    
-    Print(artistPretty) >> Imprime la tabla
-    controller.limpiarVar(artistPretty) >> Borra la tabla hecha. Dato provisional
-    """
-    size = ord_artist["size"]
-    
-    artistPretty=PrettyTable(hrules=prettytable.ALL)
-    artistPretty.field_names=["ConstituentID","DisplayName","BeginDate","Nationality",
-                            "Gender","ArtistBio","Wiki QID","ULAN"]
-    artistPretty.align="l"
-    artistPretty._max_width = {"ConstituentID":7,"DisplayName":15, "BeginDate":8,
-                                "Nationality":15,"Gender":12, "ArtistBio":15,"Wiki QID":10,"ULAN":15}
-    
-    for artist in lt.iterator(ord_artist):
-        #ArtistBio=artist["Nationality"]+"- Unknown"
-        artistPretty.add_row((artist['ConstituentID'], artist['DisplayName'],artist['BeginDate'],artist['Nationality'],
-                            artist['Gender'],artist['ArtistBio'],artist['Wiki QID'],artist['ULAN']))
-    print(artistPretty)
-
-def printTableTransPricesArtworks(ord_artwork, cadena, sample=5):
+def printTableTransPricesArtworks(ord_artwork, cadena, sample=5): ###Borrar e implementarlo con la otra función
     artPretty=PrettyTable(hrules=prettytable.ALL)
     artPretty.field_names=["ObjectID","Title","ArtistsNames","Medium",
                             "Date","Dimensions","Classification","TransCost (USD)","URL"]
@@ -179,43 +106,6 @@ def printTableTransPricesArtworks(ord_artwork, cadena, sample=5):
                             round(artwork['TransCost (USD)'],3),artwork['URL'] ))
     print(artPretty)
 
-
-def printFirstLastsResultsArt(ord_artwork, cadenaOpcion, sample=3):
-    """
-    Esta función es usada para mostrar a las 3 primeras y últimas obras 
-    en distintas opciones del view. 
-    
-    Parámetros:
-        ord_artwork: Catalogo de obras de arte (Cargado por catalogo en la opción 1 o ordenado por fechas de la opción 3)
-        sample: Hace referencia a la cantidad de primeras y últimas obras que se quieren mostrar al usuario. 
-                Su valor predeterminado es 3 por requisitos del proyecto.
-        cadenaOpcion: Es usado para imprimir si las obras fueron cargadas o ordenadas 
-    
-    print(artPretty) >> Imprime la tabla
-    controller.limpiarVar(artPretty) >> Borra la tabla hecha. Dato provisional
-    """
-    size = ord_artwork["size"]
-    artPretty=PrettyTable(hrules=prettytable.ALL)
-    artPretty.field_names=["ObjectID","Title","Artists Names","Medium",
-                            "Dimensions","Date","DateAcquired","URL"]
-    artPretty.align="l"
-    artPretty._max_width = {"ObjectID" : 10, "Title" : 15,"Artists Names":16,"Medium":13,
-                            "Dimensions":15,"Date":12,"DateAcquired":11,"URL":10}
-    
-    if size > sample*2: #Esto evita errores de list out of range
-        print("\nLas "+ str(sample)+" primeras y últimas obras "+cadenaOpcion) #se hace un rango de recorrido
-        indices=list(range(1,sample+1))+list(range(size-sample,size))
-    else:
-        indices=range(size)
-        print("\nLas "+ str(size)+" obras "+cadenaOpcion)
-    
-    for i in indices:
-        artwork = lt.getElement(ord_artwork,i)
-        dispname_artwork=(controller.getArtistName(catalog,artwork["ConstituentID"]))[0:-1]
-        artPretty.add_row((artwork['ObjectID'],artwork['Title'],dispname_artwork,artwork['Medium'],
-                        artwork['Dimensions'],artwork['Date'],artwork['DateAcquired'],artwork['URL']))
-    print(artPretty)
-    controller.limpiarVar(artPretty) #Se elimina la tabla dado que es un dato provisional
 
 
 def printPrettyTable(lista, keys, field_names, max_width, sample=3, ultimas=False):
@@ -250,6 +140,28 @@ def printPrettyTable(lista, keys, field_names, max_width, sample=3, ultimas=Fals
             
     
     print(artPretty)
+
+def printRequerimiento1(resultado):
+    if resultado[2]["size"] > 0:
+
+        maxWidth= {"ConstituentID":7,"DisplayName":15, "BeginDate":8,
+                    "Nationality":15,"Gender":12, "ArtistBio":15,"Wiki QID":10,"ULAN":15}
+
+        fieldNames= ["ConstituentID","DisplayName","BeginDate","Nationality",
+                    "Gender","ArtistBio","Wiki QID","ULAN"]
+
+        keys= ["ConstituentID","DisplayName","BeginDate","Nationality",
+                            "Gender","ArtistBio","Wiki QID","ULAN"]
+
+
+        print("\nEl total de artistas en este rango de fechas ("+fechaInicial+" - "+fechaFinal+") es: "+str(resultado[1]))
+        print("\nLos 3 primeros y últimos artistas del rango se registran en la siguiente tabla:")
+
+        printPrettyTable(resultado[2],keys,fieldNames,maxWidth,sample=3,ultimas=True)
+
+    else:
+        print("\nNo  existe ninguna obra en las base de datos que haya sido registrada entre",fechaInicial,"y",fechaFinal,"o las fechas ingresadas no siguen el formato correcto.")
+    controller.limpiarVar(resultado) #Se borra el resultado - Dato provisional
 
 def printRequerimiento2(resultado):
     if resultado[2] > 0:
@@ -313,6 +225,28 @@ def printRequerimiento3(respuesta,nombreArtista):
     else:
         print("El artista",nombreArtista,"no existe en la base de datos o no tiene ninguna obra registrada.")
 
+def printRequerimiento4(respuesta):
+    #TOP10
+    print("\n Top 10 países por obras")
+    print("\n Total países: " + str(respuesta[3]))
+    field_names1=["Nationality","ArtWorks"]
+    max_width1 = {"Nationality" : 15, "ArtWorks" : 5}
+    keys1=["Nacionalidad","Total_obras"]
+    printPrettyTable(respuesta[0],keys1,field_names1,max_width1,sample=10)
+    #PRIMER LUGAR
+    print("\nPrimer Lugar: "+respuesta[1])
+    print("Obras únicas: "+str(respuesta[5]))
+
+    field_names=["ObjectID","Title","Artists Names","Medium",
+                "Dimensions","Date","DateAcquired","URL"]
+    max_width = {"ObjectID" : 10, "Title" : 15,"Artists Names":16,"Medium":13,
+                "Dimensions":15,"Date":12,"DateAcquired":11,"URL":10}
+    keys=["ObjectID","Title","NombresArtistas","Medium",
+        "Dimensions","Date", "DateAcquired","URL"]
+    
+    print("Las primera y últimas obras del primer lugar:\n")
+    printPrettyTable(respuesta[4],keys,field_names,max_width,sample=6)
+
 def printRequerimiento6(respuesta,fecha_inicial,fecha_final,n):
     artistas=respuesta[0]
     numArtistas=respuesta[1]
@@ -330,7 +264,25 @@ def printRequerimiento6(respuesta,fecha_inicial,fecha_final,n):
     else:
         print("\nNo hay artistas en el rango seleccionado")
 
+def printCapacidadesMapas(catalog):
+    print("\n"+"*"*50)
+    print("*"*10+"Información mapas y listas"+"*"*10)
+    print("-"*40+"\n"+">"*5+"Tamaños listas creados"+"<"*5)
+    print("Tamaño de LISTA artworks: ",catalog["artworks"]["size"])
 
+    print("-"*40+"\n"+">"*5+"Capacidades y tamaños de los mapas creados"+"<"*5)
+
+    print("Tamaño de mapa artistas: ",catalog["artists"]["size"])
+    print("Capacidad final mapa artistas: ",catalog["artists"]["capacity"])
+    print("\nTamaño de mapa nacionalidades: ",catalog["nationalities"]["size"])
+    print("Capacidad final mapa nacionalidades: ",catalog["nationalities"]["capacity"])
+    print("\nTamaño de mapa fechas de nacimiento: ",catalog["Artists_BeginDate"]["size"])
+    print("Capacidad final mapa nacionalidades: ",catalog["Artists_BeginDate"]["capacity"])
+    print("\nTamaño de mapa deptos museo: ",catalog["Department"]["size"])
+    print("Capacidad final mapa deptos museo: ",catalog["Department"]["capacity"])
+    print("-"*40)
+    print("\n"+"*"*10+"FIN Información mapas y listas"+"*"*10)
+    print("*"*50)
 """
 Menu principal
 """
@@ -344,19 +296,10 @@ while True:
             catalog=initCatalog()
             loadData(catalog,nArtists=1948,nArtWork=768)
             print("\n\nSe ha completado la carga de artworks y artistas al catálogo")
-            print("Tamaño de LISTA artworks: ",catalog["artworks"]["size"])
-            print("Tamaño de mapa artistas: ",catalog["artists"]["size"])
+            printCapacidadesMapas(catalog)
+            # print(catalog["artworks_index_by_initial_year"])
+            # print(catalog["artworks_index_by_initial_year"]["table"])
 
-
-            print("\nTamaño de mapa mediums: ",catalog["mediums"]["size"])
-            print("Capacidad final mapa nacionalidades: ",catalog["mediums"]["capacity"])
-
-            print("\nTamaño de mapa nacionalidades: ",catalog["nationalities"]["size"])
-            print("Capacidad final mapa nacionalidades: ",catalog["nationalities"]["capacity"])
-            #catalog["Artists_BeginDate"]
-            print("\nTamaño de mapa fechas de nacimiento: ",catalog["Artists_BeginDate"]["size"])
-            print("\nTamaño de mapa deptos museo: ",catalog["Department"]["size"])
-        
         # Caso cuando no hay datos cargados
         elif catalog==None and int(inputs[0])!=7:
             print("\nPara correr la funciones cargue la información primero.")
@@ -365,26 +308,9 @@ while True:
             tiempoInicial=time.process_time()
             fechaInicial=input("\nIngrese el año inicial (AAAA): ")
             fechaFinal=input("\nIngrese el año final (AAAA): ")
+            print("\n..Cargando")
             resultado= controller.listarArtistasCronologicamente(catalog, fechaInicial, fechaFinal)
-            print("\nHay ",str(resultado[1])," artistas en este rango de fechas")
-            nartistasView=0
-            posInicial=1
-            print("3 primeros artistas")
-            print("Func Lista",resultado[2])
-            print("PRETTY TABLEEEEEEE")
-            print(printResultsArtists(resultado[2]))
-            # while nartistasView<=3:
-            #     fechaIn=lt.getElement(resultado[0],posInicial)
-            #     artistasLista=mp.get(catalog["Artists_BeginDate"],str(fechaIn))["value"]["Artistas"]
-            #     #print(artistasLista)
-            #     for artista in lt.iterator(artistasLista):
-            #         nartistasView+=1
-            #         print(nartistasView,mp.get(catalog["artists"],artista)["value"])
-            #         if nartistasView>=3:
-            #             print(artista,nartistasView)
-            #             break
-            #     posInicial+=1
-
+            printRequerimiento1(resultado)
 
         elif int(inputs[0]) == 2:
             fechaInicial=input("\nIngrese la fecha inicial (AAAA-MM-DD): ")
@@ -403,33 +329,20 @@ while True:
 
             pass
         elif int(inputs[0]) == 4:
-            tiempoInicial=time.process_time()
-            respuesta=controller.clasificarObrasNacionalidad(catalog)
-            opcion=int(input("Seleccione la respuesta que quiere ver: \n1- Lab6 \n2- Reto 2\n"))
-            if opcion==1:
-                print("\n--- Lab 6 ---")
-                nacionalidad=input("Ingrese la nacionalidad: ")
-                respuesta=controller.buscarNacionalidad(catalog,nacionalidad)
-                print("Cantidad de obras en la nacionalidad:"+nacionalidad+"\nCantidad obras: "+respuesta)
 
-            if opcion==2:
-                print("\n--- Reto 2 ---")
-                print("\n Top 10 países por obras")
-                print("\n Total países: " + str(respuesta[3]))
-                print(respuesta[0])
-                i=1
-                printNationalityArt(respuesta[0])
-                print("\nPrimer Lugar: "+respuesta[1])
-                print("Obras únicas: "+str(respuesta[5]))
-                print("Las primera y últimas obras del primer lugar:\n")
-                printResultsArt(respuesta[4],"")
-                # nacionalidades=mp.keySet(respuesta)
-                # for pais in lt.iterator(nacionalidades):
-                #     obras=mp.get(respuesta,pais)
-                #     cantidadobras=me.getValue(obras)["Total_obras"]
-                #     print(pais,"--- Q obras: ",str(cantidadobras))
+            tiempoInicial=time.process_time()
+            print("...Cargando top10 de nacionalidades de acuerdo a sus obras ")
+            respuesta=controller.clasificarObrasNacionalidad(catalog)
+            printRequerimiento4(respuesta)
+            # print("***TIEMPO SIN PRETTY TABLES: ",str((time.process_time()-tiempoInicial)*1000))
+            # print("\n Top 10 países por obras")
+            # print("\n Total países: " + str(respuesta[3]))
+            # printNationalityArt(respuesta[0])
+
+            # printResultsArt(respuesta[4],"")
+
         # Opción 0: Salir
-        elif int(inputs[0]) == 5:
+        elif int(inputs[0]) == 5: ##Implementarlo de la otra forma xd
             tiempoInicial=time.process_time()
             nombreDepartamento=input("\nIngrese el nombre del departamento: ")
             tiempoInicial=time.process_time()
@@ -440,7 +353,7 @@ while True:
             pesoTotal=respuesta[1]
             sizeLista=respuesta[4]
             if sizeLista>0:
-                print("MoMA trasnportará",lt.size(listaObrasDepartamentoPrecio),"obras del departamento de",nombreDepartamento)
+                print("MoMA trasnportará",sizeLista,"obras del departamento de",nombreDepartamento)
                 print("\nEl peso total estimado es",str(pesoTotal)+"kg")
                 print("El precio estimado de transportar todas las obras del departamento es",str(precioTotal)+"USD")
                 

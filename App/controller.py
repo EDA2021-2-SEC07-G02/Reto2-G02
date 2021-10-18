@@ -46,15 +46,18 @@ def loadData(catalog,nArtists=6656,nArtWork=15008): #10 pct parámetros
     """
     Carga los artistas y obras al catalogo
     """
-    loadArtists(catalog,nArtists)
-    loadArtworks(catalog,nArtWork)
+    muestra=input("PRUEBA- Ingrese la muestra:  ")
+    print("*************PRUEBAS CON MUESTRA TAMAÑO "+muestra+" *********")
+    loadArtists(catalog,nArtists,muestra)
+    loadArtworks(catalog,nArtWork,muestra)
 
-def loadArtists(catalog,nArtists=6656):
+
+def loadArtists(catalog,nArtists=6656,muestra="small"):
 
     """
     Carga los artistas en una lista dado un nombre de archivo
     """
-    artistsFilename = cf.data_dir + 'MoMA\\Artists-utf8-small.csv'
+    artistsFilename = cf.data_dir + 'MoMA\\Artists-utf8-' +muestra+ '.csv'
     inputFile= csv.DictReader(open(artistsFilename, encoding='utf-8'))
     #bar =tqdm(desc="..Carga artistas: ",total=nArtists)
     start_time = time.process_time()
@@ -65,11 +68,11 @@ def loadArtists(catalog,nArtists=6656):
     stop_time = time.process_time()
     print("Tiempo mapas artists (constituent ID),(BeginDate)",contarTiempo(start_time,stop_time)[1]) #MOD LAB!
 
-def loadArtworks(catalog,nArtWork=15008):
+def loadArtworks(catalog,nArtWork=15008,muestra="small"):
     """
     Carga las obras en una lista dado un nombre de archivo
     """
-    artworksFilename = cf.data_dir + 'MoMA\\Artworks-utf8-small.csv'
+    artworksFilename = cf.data_dir + 'MoMA\\Artworks-utf8-' +muestra+ '.csv'
     inputFile= csv.DictReader(open(artworksFilename, encoding='utf-8'))
     #bar =tqdm(desc="..Carga Artworks: ",total=nArtWork)
     start_time = time.process_time()

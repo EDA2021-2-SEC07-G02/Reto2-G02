@@ -80,10 +80,7 @@ def newCatalog():
                                    maptype='CHAINING', #elegir si chaining o probing
                                    loadfactor=4.0) # Utilizado para encontrar rapidamente
 
-    catalog['mediums'] = mp.newMap(25000,
-                                   maptype="CHAINING",
-                                   loadfactor=4.0,
-                                   comparefunction=compareMedium)
+
     catalog['nationalities'] = mp.newMap(250, 
                                    maptype="CHAINING",
                                    loadfactor=4.0,
@@ -109,7 +106,8 @@ def NewNationalityArt(pais):
     """
     nationality={"Nationality":"",
                 "Artworks": None,
-                "Total_obras":0}
+                "Total_obras":0,
+                "ObrasUnicas":0}
     nationality["Nationality"]=pais
     nationality["Artworks"]=lt.newList("ARRAY_LIST")
     return nationality
@@ -177,11 +175,9 @@ def addArtwork(catalog, artwork):
         listaIndicesArtwork=lt.newList("ARRAY_LIST")
         lt.addLast(listaIndicesArtwork,lt.size(catalog["artworks"]))
         mp.put(catalog["artworks_index_by_initial_year"],initialYear,listaIndicesArtwork)  
+    
+    addDepartment(catalog,artwork)
 
-    try:
-        addDepartment(catalog,artwork)
-    except:
-        print("- No se puede agregar")  # TODO: Borrar print
 
 
 
@@ -210,6 +206,7 @@ def addNationality(catalog,artwork):
     constituentID=artwork["ConstituentID"][1:-1] #se obtiene el constituentID que relaciona una obra con un artista
     codigoNum=constituentID.split(",")
     objectID=artwork["ObjectID"]
+    nacionalidadesObra=lt.newList("ARRAY_LIST")
     for ID in codigoNum:
         conID=ID.strip() #se eliminan los espacios en blanco
         existArtist=mp.contains(catalog["artists"],conID)
@@ -227,8 +224,12 @@ def addNationality(catalog,artwork):
         else:
             nationalityMap=NewNationalityArt(nationality)
             mp.put(catalog["nationalities"],nationality,nationalityMap)
-        lt.addLast(nationalityMap["Artworks"],objectID) #Se añade solamente el objectID, preguntar si es necesario añadir toda la obra de arte
+        if lt.isPresent(nacionalidadesObra,nationality)==0:
+            lt.addLast(nacionalidadesObra,nationality)
+            nationalityMap["ObrasUnicas"]+=1
+            lt.addLast(nationalityMap["Artworks"],objectID) #Se añade solamente el objectID, y solo se añade una vez la obra por nacionalidad
         nationalityMap["Total_obras"]+=1
+    nacionalidadesObra=None #Se elimina lista provisional
 
 def addDepartment(catalog,artwork):
     # TODO: Documentación
@@ -269,16 +270,9 @@ def listarArtistasCronologicamente(catalog,fechaInicial,fechaFinal): # Requerimi
             lt.addLast(listaNac,fecha)
             cantidadArtistas=mp.get(catalog["Artists_BeginDate"],fechaStr)["value"]["Artistas"]["size"]
             contador+=cantidadArtistas
-    print("\nLista de nacimientos sin ordenar\n",listaNac)  # TODO: Borrar print
-    #ms.sort(listaNac,cmpArtistDate)
-    print("\nSelection editado! solamente los 10 primeros y últimos lugares \n")  # TODO: Borrar print
-    selection.sortEdit(listaNac,cmpArtistDate,10,ordenarInicio=True,ordenarFinal=True)
-    print(listaNac)  # TODO: Borrar print
+    selection.sortEdit(listaNac,cmpArtistDate,3,ordenarInicio=True,ordenarFinal=True)
     respuestaLista=None
-    try:
-        respuestaLista=listasRespuesta(listaNac,catalog,"Artists","req1")
-    except:
-        print("error")   # TODO: Borrar print
+    respuestaLista=listasRespuesta(listaNac,catalog,"Artists","req1")
     return listaNac,contador,respuestaLista
 
 
@@ -302,6 +296,8 @@ def listarAdquisicionesCronologicamente(catalog,fechaInicial,fechaFinal):  # Req
         contadorRango: total de obras en el rango de fechas
     """
 
+    # print("-------------------KEYS",mp.keySet(catalog['artworks_index_by_initial_year']))
+    # print("---------------- TABLE",catalog["artworks_index_by_initial_year"]["table"])
     contadorPurchase=0
     
     
@@ -364,7 +360,7 @@ def listarAdquisicionesCronologicamente(catalog,fechaInicial,fechaFinal):  # Req
 
     return listaAdquisiciones, contadorPurchase, lt.size(listaAdquisiciones), lt.size(mp.valueSet(artistas))
 
-def nombresArtistas(catalog,consIDs,artistas):
+def nombresArtistas(catalog,consIDs,artistas): #Función utilizada en varios req
     listaConsID=consIDs.strip("[]").replace(" ","").split(",")
     resp=""
     for consID in listaConsID:
@@ -405,7 +401,7 @@ def tecnicasObrasPorArtista(catalog,nombre): # Requerimiento Individual 3: Funci
     return tecnicas,totalObras,lt.getElement(lt.getElement(tecnicas,0),0)["Medium"] # TODO: Falta organizar las tecnicasss
         
 
-def clasificarObrasNacionalidad(catalog): # Requerimiento 4 TODO: Colocar si es la función principal o no
+def clasificarObrasNacionalidad(catalog):
     """
     Se crea una lista para guardar las nacionalidades que existan del mapa
     junto con su cantidad de obras. Seguido a esto, la lista se ordena con merge sort.
@@ -423,36 +419,43 @@ def clasificarObrasNacionalidad(catalog): # Requerimiento 4 TODO: Colocar si es 
         infoAdd={"Nacionalidad":nationality,
                 "Total_obras":infoNationality["Total_obras"]}
         lt.addLast(nationalitiesQ,infoAdd)
-    #ms.sort(nationalitiesQ,cmpNationalitiesSize)
-    selection.sortEdit(nationalitiesQ,cmpNationalitiesSize,10,ordenarInicio=True,ordenarFinal=False)
+    selection.sortEdit(nationalitiesQ,cmpNationalitiesSize,10,ordenarInicio=True,ordenarFinal=False) #TOP 10
     keyPrimerlugar=lt.getElement(nationalitiesQ,1)["Nacionalidad"]
     top10=lt.subList(nationalitiesQ,1,10)
     sizeNationalitiesQ=nationalitiesQ["size"]
 
     #Respuesta con 6 obras
-    listaObrasPrimerL=mp.get(catalog["nationalities"],keyPrimerlugar)["value"]["Artworks"]
-    #Obras únicas primer lugar
-    obrasUnicas=lt.newList("ARRAY_LIST")
-    for obra in lt.iterator(listaObrasPrimerL):
-        existeObra=lt.isPresent(obrasUnicas,obra)
-        if existeObra==0:
-            lt.addLast(obrasUnicas,obra)
-    sizeObrasUnicas=obrasUnicas["size"]
-    rtaNElementos=listasRespuesta(obrasUnicas,catalog,"Artworks","req4")
-    ms.sort(rtaNElementos,cmpArtworkByDateAcquired) #Discord 11-10 octubre, ordenar por fecha de adquisición
+    listaObrasPrimerL=mp.get(catalog["nationalities"],keyPrimerlugar)["value"]
+    obrasUnicas=listaObrasPrimerL["Artworks"]
+    #print("**********OBRAS UNICAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAS", obrasUnicas)
+    sizeObrasUnicas=listaObrasPrimerL["ObrasUnicas"]
+    rtaNElementos=lt.newList("ARRAY_LIST")
+    i=1
+    n=0
+    while n<6 and i<sizeObrasUnicas+1:
+        elemento=lt.getElement(obrasUnicas,i)
+        #print("Pos",i,"ele",elemento)
+        for obra in lt.iterator(catalog["artworks"]):
+            if elemento==obra["ObjectID"].strip(): #Codigo obra
+                constituentID=obra["ConstituentID"][1:-1] #se obtiene el constituentID que relaciona una obra con un artista
+                codigoNum=constituentID.split(",")
+                obra["NombresArtistas"]="" #se inicializa la llave que contiene los nomnbres de los artistas
+                for ID in codigoNum:
+                    print("ObjectID: ",elemento,"ID artista",ID)
+                    artist=mp.get(catalog["artists"],ID.strip())["value"]["DisplayName"]
+                    obra["NombresArtistas"]+=artist+","
+                lt.addLast(rtaNElementos,obra)
+                break
+            n+=1
+            #print(n,elemento)
+        if n==3:
+            print("-> ",elemento)
+            i=sizeObrasUnicas
+        elif n>3:
+            i-=1
+        else:
+            i+=1
     return top10,keyPrimerlugar,nationalitiesQ,sizeNationalitiesQ,rtaNElementos,sizeObrasUnicas #nationalitiesQ solamente para lab6, borrar después 
-
-def buscarNacionalidad(catalog,nacionalidad): # TODO: Edit laboratorio 6 borrarrrrrrrr  # Requerimiento 4 TODO: Colocar si es la función principal o no
-    obrasNacionalidad=""
-    existNationality=mp.contains(catalog["nationalities"],nacionalidad)
-    if existNationality:
-        obras=mp.get(catalog["nationalities"],nacionalidad)
-        cantidadobras=me.getValue(obras)["Total_obras"]
-        obrasNacionalidad=str(cantidadobras)
-    else:
-        obrasNacionalidad="La nacionalidad no existe"
-    return obrasNacionalidad
-
 
 
 def transportarObrasDespartamento(catalog,departamento): # Requerimiento Grupal 5: Función Principal
@@ -576,29 +579,7 @@ def artistasMasProlificos(catalog,fecha_inicio,fecha_final,numero_artistas): # R
     
     return artistasMasProlificos, numeroArtistasRango
 
-
-
-
-
-# Funciones utilizadas para comparar elementos dentro de una lista/mapa
-
-# def compareConsIDArtistLT(catalog, ConsIDArtist):  #Función comparación al crear una array_list
-#     """
-    
-#     """
-#     if (ConsIDArtist == catalog['Nationality']):
-#         return 0
-#     else:
-#         return -1
-
-# def compareObjectID(catalog, ObjectID):  #Función comparación al crear una array_list
-#     """
-    
-#     """
-#     if (ObjectID == catalog['artworks']):
-#         return 0
-#     else:
-#         return -1
+#Funciones de comparación
 
 def cmpFunctionTecnicasArtista(tecnica1,tecnica2): # Requerimiento Individual 3: Función Comparación Ordenamiento
     """ 
@@ -792,8 +773,7 @@ def sortList(lista,cmpFunction,sortType=3):
 
 # Funciones complementarias
 
-def listasRespuesta(lista,catalog,seccionCatalogo,requerimiento,elementosTotal=6,ordenarSoloInicio=True): # TODO: Revisar si esto no va más bien en el controlador
-    # TODO: revisar!
+def listasRespuesta(lista,catalog,seccionCatalogo,requerimiento,elementosTotal=6,ordenarSoloInicio=True): ##Borrar después xd o modificar xd
     """
     La función buscará los n primeros y últimos elementos de una lista,
     los cuales se guardarán en una nueva array list que será usadada para
@@ -811,11 +791,10 @@ def listasRespuesta(lista,catalog,seccionCatalogo,requerimiento,elementosTotal=6
     pos=1
     recorrer=True
     mitad=elementosTotal//2
-    print(lista) # TODO: Borrar print
     precioTransporte=0
     while recorrer:
         elemento=lt.getElement(lista,pos)
-        print(n,"Pos:",pos,elemento)  # TODO: Borrar print
+        #print(n,"Pos:",pos,elemento)
         if requerimiento=="req4" or requerimiento=="req5":
             if requerimiento=="req5":
                 precioTransporte=elemento["TransCost (USD)"]
@@ -824,39 +803,32 @@ def listasRespuesta(lista,catalog,seccionCatalogo,requerimiento,elementosTotal=6
                 if elemento==obra["ObjectID"].strip(): #Codigo obra
                     constituentID=obra["ConstituentID"][1:-1] #se obtiene el constituentID que relaciona una obra con un artista
                     codigoNum=constituentID.split(",")
+                    obra["NombresArtistas"]="" #se inicializa la llave que contiene los nomnbres de los artistas
                     for ID in codigoNum:
                         artist=mp.get(catalog["artists"],ID.strip())["value"]["DisplayName"]
-                        obra["NombresArtistas"]=artist+","
+                        obra["NombresArtistas"]+=artist+","
                     obra["TransCost (USD)"]=precioTransporte
                     lt.addLast(listaRespuesta,obra)
                     n+=1
-                    print(n,elemento)  # TODO: Borrar print
                     break
 
         elif requerimiento=="req1":
             artistasLista=mp.get(catalog["Artists_BeginDate"],str(elemento))["value"]["Artistas"]
-            print("ARTISTAS LISTA",artistasLista)  # TODO: Borrar print
-                #print(artistasLista)
             for artista in lt.iterator(artistasLista):
                 if pos==0:
                     pos=lista["size"]
 
                 if n==mitad+1 and pos==1: #Para no quedarse solamente en el primer año en caso de que tenga muchos artistas
-                    print("NO MORE",artista,n)  # TODO: Borrar print
+                    #print("NO MORE",artista,n)
                     break
                 elif n>elementosTotal and pos==lista["size"]:
-                    print("NO MORE END",artista,n)  # TODO: Borrar print
+                    #print("NO MORE END",artista,n)
                     recorrer=False
                     break
                 else:
                     artista=mp.get(catalog["artists"],artista)["value"]
                     lt.addLast(listaRespuesta,artista)
                     n+=1
-                    
-               
-        # if n==mitad:
-        #     pos=lista["size"]
-        
         if n>elementosTotal or n>lista["size"]:
             recorrer=False
         
@@ -866,8 +838,6 @@ def listasRespuesta(lista,catalog,seccionCatalogo,requerimiento,elementosTotal=6
             pos=lista["size"]
         else:
             pos-=1
-        #n+=1
-        
     return listaRespuesta
 
 def contarTiempo(start_time,stop_time): # TODO: Esto también creo que debe ir en el controlador
