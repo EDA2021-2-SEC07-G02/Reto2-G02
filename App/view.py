@@ -179,6 +179,102 @@ def printTableTransPricesArtworks(ord_artwork, cadena, sample=5):
                             round(artwork['TransCost (USD)'],3),artwork['URL'] ))
     print(artPretty)
 
+
+def printFirstLastsResultsArt(ord_artwork, cadenaOpcion, sample=3):
+    """
+    Esta función es usada para mostrar a las 3 primeras y últimas obras 
+    en distintas opciones del view. 
+    
+    Parámetros:
+        ord_artwork: Catalogo de obras de arte (Cargado por catalogo en la opción 1 o ordenado por fechas de la opción 3)
+        sample: Hace referencia a la cantidad de primeras y últimas obras que se quieren mostrar al usuario. 
+                Su valor predeterminado es 3 por requisitos del proyecto.
+        cadenaOpcion: Es usado para imprimir si las obras fueron cargadas o ordenadas 
+    
+    print(artPretty) >> Imprime la tabla
+    controller.limpiarVar(artPretty) >> Borra la tabla hecha. Dato provisional
+    """
+    size = ord_artwork["size"]
+    artPretty=PrettyTable(hrules=prettytable.ALL)
+    artPretty.field_names=["ObjectID","Title","Artists Names","Medium",
+                            "Dimensions","Date","DateAcquired","URL"]
+    artPretty.align="l"
+    artPretty._max_width = {"ObjectID" : 10, "Title" : 15,"Artists Names":16,"Medium":13,
+                            "Dimensions":15,"Date":12,"DateAcquired":11,"URL":10}
+    
+    if size > sample*2: #Esto evita errores de list out of range
+        print("\nLas "+ str(sample)+" primeras y últimas obras "+cadenaOpcion) #se hace un rango de recorrido
+        indices=list(range(1,sample+1))+list(range(size-sample,size))
+    else:
+        indices=range(size)
+        print("\nLas "+ str(size)+" obras "+cadenaOpcion)
+    
+    for i in indices:
+        artwork = lt.getElement(ord_artwork,i)
+        dispname_artwork=(controller.getArtistName(catalog,artwork["ConstituentID"]))[0:-1]
+        artPretty.add_row((artwork['ObjectID'],artwork['Title'],dispname_artwork,artwork['Medium'],
+                        artwork['Dimensions'],artwork['Date'],artwork['DateAcquired'],artwork['URL']))
+    print(artPretty)
+    controller.limpiarVar(artPretty) #Se elimina la tabla dado que es un dato provisional
+
+
+def printPrettyTable(lista, keys, field_names, max_width, sample=3, ultimas=False):
+    artPretty=PrettyTable(hrules=prettytable.ALL)
+    artPretty.field_names=field_names
+    artPretty._max_width = max_width
+
+    cont=1
+
+    for elemento in lt.iterator(lista):
+        valoresFila=[]
+        for key in keys:
+            valoresFila.append(elemento[key])
+        artPretty.add_row(tuple(valoresFila))
+        if cont>=sample:
+            break
+        cont+=1
+    
+    if ultimas:
+        ultimo_index=lt.size(lista)
+        cont2=1
+        while cont2<=sample:
+            indice=ultimo_index-sample+cont2
+            if indice>cont and indice>=0 and lt.size(lista)>=indice:
+                elemento=lt.getElement(lista,indice)
+                valoresFila=[]
+                for key in keys:
+                    valoresFila.append(elemento[key])
+                artPretty.add_row(valoresFila)
+            cont2+=1
+            
+            
+    
+    print(artPretty)
+
+def printRequerimiento2(resultado):
+    if resultado[2] > 0:
+
+        maxWidth={"ObjectID" : 10, "Title" : 15,"Artists Names":16,"Medium":13,
+                            "Dimensions":15,"Date":12,"DateAcquired":11,"URL":10}
+        fieldNames= ["ObjectID","Title","Artists Names","Medium",
+                            "Dimensions","Date","DateAcquired","URL"]
+
+        keys= ["ObjectID","Title","ArtistsNames","Medium",
+                            "Dimensions","Date","DateAcquired","URL"]
+        
+        print("\nEl total de obras en el rango de fechas "+fechaInicial+" - "+fechaFinal+" es: "+str(resultado[2]))
+        print("\nEl total de obras compradadas ('Purchase') en el rango de fechas "+fechaInicial+" - "+fechaFinal+" es: "+str(resultado[1]))
+        print("\nLas tres primeras y tres ultimas obras del rango se registran en la siguiente tabla:")
+
+        printPrettyTable(resultado[0],keys,fieldNames,maxWidth,sample=3,ultimas=True)
+
+    else:
+        print("\nNo  existe ninguna obra en las base de datos que haya sido registrada entre",fechaInicial,"y",fechaFinal,"o las fechas ingresadas no siguen el formato correcto.")
+    controller.limpiarVar(resultado) #Se borra el resultado - Dato provisional
+
+
+
+
 """
 Menu principal
 """
@@ -233,7 +329,16 @@ while True:
             #             break
             #     posInicial+=1
 
+
         elif int(inputs[0]) == 2:
+            fechaInicial=input("\nIngrese la fecha inicial (AAAA-MM-DD): ")
+            fechaFinal=input("\nIngrese la fecha final (AAAA-MM-DD): ")
+            tiempoInicial=time.process_time()
+            resultado= controller.listarAdquisicionesCronologicamente(catalog, fechaInicial, fechaFinal)
+            printRequerimiento2(resultado)
+
+        
+        elif int(inputs[0]) == 3:
             tiempoInicial=time.process_time()
             medio=input("Ingrese el medio: ")
             n=int(input("Ingrese la cantidad de obras a seleccionar: "))

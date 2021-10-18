@@ -91,8 +91,16 @@ def listarArtistasCronologicamente(catalog,fechaInicial,fechaFinal):
     """
     return model.listarArtistasCronologicamente(catalog,int(fechaInicial),int(fechaFinal))
 
-def obrasMasAntiguas(catalog,medio,n):
-    return model.obrasMasAntiguas(catalog,medio,n)
+def listarAdquisicionesCronologicamente(catalog,fechaInicial,fechaFinal):
+    """
+    Retorna a los artistas ordenados cronologicamente de acuerdo a un rango de fechas
+    Además del total de artistas en ese rango de fechas
+    """
+    return model.listarAdquisicionesCronologicamente(catalog,fechaInicial,fechaFinal)
+
+# TODO: ELiminar, esto era de lab antiguo
+# def obrasMasAntiguas(catalog,medio,n):
+#     return model.obrasMasAntiguas(catalog,medio,n)
 
 def clasificarObrasNacionalidad(catalog):
     return model.clasificarObrasNacionalidad(catalog)
@@ -105,3 +113,9 @@ def transportarObrasDespartamento(catalog,departamento):
 
 def contarTiempo(start_time,stop_time):
     return model.contarTiempo(start_time,stop_time)
+
+def limpiarVar(dato):
+    """
+    Llama a la función limpiarvar
+    """
+    return model.limpiarVar(dato)
