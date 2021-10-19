@@ -67,9 +67,9 @@ def newCatalog():
 
 
     #Mapas
-    catalog['artworks_index_by_initial_year'] = mp.newMap(1000, #Hay aprox 15k de artistas
-                                   maptype='CHAINING', #elegir si chaining o probing
-                                   loadfactor=4.0)
+    # catalog['artworks_index_by_initial_year'] = mp.newMap(1000, #Hay aprox 15k de artistas
+    #                                maptype='CHAINING', #elegir si chaining o probing
+    #                                loadfactor=4.0)
 
     catalog['artists'] = mp.newMap(15000, #Hay aprox 15k de artistas
                                    maptype='CHAINING', #elegir si chaining o probing
@@ -179,9 +179,9 @@ def addArtwork(catalog, artwork):
     
     addDepartment(catalog,artwork)
 
-    # for consID in artwork["ConstituentID"].strip("[]").replace(" ","").split(","):
-    #     listaIndices=mp.get(catalog["artists"],consID)["value"]["artwork_index_list"] # Req 3 y 6
-    #     lt.addLast(listaIndices,lt.size(catalog["artworks"])) # Añadimos los indices en nuestro mapa para requerirlos en nuestros requerimientos
+    for consID in artwork["ConstituentID"].strip("[]").replace(" ","").split(","):
+        listaIndices=mp.get(catalog["artists"],consID)["value"]["artwork_index_list"] # Req 3 y 6
+        lt.addLast(listaIndices,lt.size(catalog["artworks"])) # Añadimos los indices en nuestro mapa para requerirlos en nuestros requerimientos
     
     # initialYear=artwork["DateAcquired"].split("-")[0]
     # if initialYear.isnumeric():
@@ -301,11 +301,15 @@ def addDepartment(catalog,artwork):
 
 # Funciones de consulta
 
-def listarArtistasCronologicamente(catalog,fechaInicial,fechaFinal): # Requerimiento Grupal 1: Función Principal
+def listarArtistasCronologicamente(catalog,fechaInicialS,fechaFinalS): # Requerimiento Grupal 1: Función Principal
     # TODO: Documentación
+    # print(catalog["artworks_index_by_initial_year"]["table"])
+    # print(mp.valueSet(catalog["artworks_index_by_initial_year"]))
     listaNac=lt.newList("ARRAY_LIST") #Se crea una nueva lista
     nacimientoKeys=mp.keySet(catalog["Artists_BeginDate"]) #Todos los keys del mapa de años de nacimiento
     contador=0
+    fechaInicial=int(fechaInicialS)
+    fechaFinal=int(fechaFinalS)
     for fechaStr in lt.iterator(nacimientoKeys):
         fecha=int(fechaStr)
         if fecha>=fechaInicial and fecha<=fechaFinal:
@@ -381,7 +385,7 @@ def listarAdquisicionesCronologicamente(catalog,fechaInicial,fechaFinal):  # Req
             pos=lista["size"]
         else:
             pos-=1
-    return rtaNElementos,contadorPurchase,contadorObras,contadorArtistas,
+    return rtaNElementos,contadorPurchase,contadorObras,contadorArtistas
 
 def listarAdquisicionesCronologicamente0(catalog,fechaInicial,fechaFinal):  # Requerimiento Grupal 2: Función Principal
     """ # TODO: Documentación
@@ -626,23 +630,27 @@ def transportarObrasDespartamento(catalog,departamento): # Requerimiento Grupal 
 
 def artistasMasProlificos(catalog,fecha_inicio,fecha_final,numero_artistas): # Requerimiento Bono 6: Función Única
     # TODO: Documentación
-    llavesArtistas=mp.keySet(catalog["artists"])
-    llavesArtistas=lt.subList(llavesArtistas,0,lt.size(llavesArtistas)) 
+    # llavesArtistas=mp.keySet(catalog["artists"])
+    # llavesArtistas0=lt.subList(llavesArtistas,0,lt.size(llavesArtistas)) 
     gruposArtistas=lt.newList("ARRAY_LIST")
     numeroMaximo=0
+    fechasArtistas=listarArtistasCronologicamente(catalog,fecha_inicio,fecha_final)[0]
+    print(fechasArtistas)
+    contadorArtistas=0
+    
 
     primerRecorrido=True
-    numeroArtistasRango=0
+    numeroArtistasRango=fechasArtistas["size"]
 
     while numeroMaximo<numero_artistas:
         listaArtistas=lt.newList("ARRAY_LIST")
         maxObras=-1
         contLlaves=1
-        for consID in lt.iterator(llavesArtistas):
-            artista=mp.get(catalog["artists"],consID)["value"]
-            if fecha_inicio<int(artista["BeginDate"]) and fecha_final>int(artista["BeginDate"]):
-                if(primerRecorrido):
-                    numeroArtistasRango+=1
+        for fecha in lt.iterator(fechasArtistas):
+            artistasCode=mp.get(catalog["Artists_BeginDate"],str(fecha))["value"]["Artistas"]
+            for artista in lt.iterator(artistasCode):
+                contadorArtistas+=1
+                artista=mp.get(catalog["artists"],artista)["value"]
                 numero_obras=lt.size(artista["artwork_index_list"])
                 if numero_obras>maxObras:
                     maxObras=numero_obras
@@ -656,8 +664,8 @@ def artistasMasProlificos(catalog,fecha_inicio,fecha_final,numero_artistas): # R
                     lt.addLast(listaArtistas,artista)
             contLlaves+=1
 
-        for artistaASacar in lt.iterator(listaArtistas):
-            lt.deleteElement(llavesArtistas,artistaASacar["posicionListaLLaves"])
+        for artistaASacar in lt.iterator(listaArtistas): ###???????? si elimino estas lineas no funciona el modelo xd
+            lt.deleteElement(fechasArtistas,artistaASacar["posicionListaLLaves"]) #se eliminaría una fecha (???)
 
         numeroMaximo+=lt.size(listaArtistas)
         print(listaArtistas)
@@ -682,7 +690,7 @@ def artistasMasProlificos(catalog,fecha_inicio,fecha_final,numero_artistas): # R
     if lt.size(artistasMasProlificos)>numero_artistas:
         artistasMasProlificos=lt.subList(artistasMasProlificos,0,numero_artistas)
     
-    return artistasMasProlificos, numeroArtistasRango
+    return artistasMasProlificos, contadorArtistas
 
 #Funciones de comparación
 

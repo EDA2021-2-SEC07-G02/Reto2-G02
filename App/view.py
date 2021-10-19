@@ -41,11 +41,12 @@ operación solicitada
 
 def printMenu():
     print("-"*25+"Bienvenido"+ "-"*25)
-    print("0- Cargar información en el catálogo")
-    print("1- Listar cronólogicamente a artistas")
-    print("2- Seleccionar n obras más antiguas para un medio específico")
-    print("4- Clasificar obras dependiendo su nacionalidad ")
-    print("5- Precio de transporte de obras por departamento")
+    print("1 - Listar cronológicamente los artistas")
+    print("2 - Listar cronológicamente las adquisiciones")
+    print("3 - Clasificar las obras de un artista por técnica")
+    print("4 - Clasificar las obras por la nacionalidad de sus creadores")
+    print("5 - Transportar obras de un departamento")
+    print("6 - Artistas más prolíficos")
     print("7- Salir")
 
 # Funciones de inicialización de catalogo y carga de datos
@@ -251,7 +252,7 @@ def printRequerimiento6(respuesta,fecha_inicial,fecha_final,n):
     artistas=respuesta[0]
     numArtistas=respuesta[1]
     if(numArtistas>0):
-        print("\n Hay",numArtistas,"en el periodo de",str(fecha_inicial),"a",str(fecha_final))
+        print("\n Hay",numArtistas," artistas en el periodo de",str(fecha_inicial),"a",str(fecha_final))
         print("\nLos",str(n),"artistas más prolíficos son:")
         keys=["ConstituentID","DisplayName","BeginDate","Gender","ArtistBio",
                             "Wiki QID","ULAN","ArtworkNumber","MediumNumber","TopMedium"]
@@ -274,12 +275,22 @@ def printCapacidadesMapas(catalog):
 
     print("Tamaño de mapa artistas: ",catalog["artists"]["size"])
     print("Capacidad final mapa artistas: ",catalog["artists"]["capacity"])
+    #DateAcquiredArt
+    print("\nTamaño de mapa fechas de adquisición obras: ",catalog["DateAcquiredArt"]["size"])
+    print("Capacidad final mapa fechas de adquisición obras: ",catalog["DateAcquiredArt"]["capacity"])
+    
+    print("\nTamaño de mapa fechas de nacimiento artistas: ",catalog["Artists_BeginDate"]["size"])
+    print("Capacidad final mapa fechas de nacimiento artistas: ",catalog["Artists_BeginDate"]["capacity"])
+    #artists_index_name
+    print("\nTamaño de mapa nombres artistas: ",catalog["artists_index_name"]["size"])
+    print("Capacidad final mapa nombres artistas: ",catalog["artists_index_name"]["capacity"])
+
     print("\nTamaño de mapa nacionalidades: ",catalog["nationalities"]["size"])
     print("Capacidad final mapa nacionalidades: ",catalog["nationalities"]["capacity"])
-    print("\nTamaño de mapa fechas de nacimiento: ",catalog["Artists_BeginDate"]["size"])
-    print("Capacidad final mapa nacionalidades: ",catalog["Artists_BeginDate"]["capacity"])
+
     print("\nTamaño de mapa deptos museo: ",catalog["Department"]["size"])
     print("Capacidad final mapa deptos museo: ",catalog["Department"]["capacity"])
+
     print("-"*40)
     print("\n"+"*"*10+"FIN Información mapas y listas"+"*"*10)
     print("*"*50)
