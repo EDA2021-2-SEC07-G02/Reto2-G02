@@ -172,7 +172,7 @@ def printRequerimiento2(resultado):
         fieldNames= ["ObjectID","Title","Artists Names","Medium",
                             "Dimensions","Date","DateAcquired","URL"]
 
-        keys= ["ObjectID","Title","ArtistsNames","Medium",
+        keys= ["ObjectID","Title","NombresArtistas","Medium",
                             "Dimensions","Date","DateAcquired","URL"]
         
         print("\nEl total de obras en el rango de fechas "+fechaInicial+" - "+fechaFinal+" es: "+str(resultado[2]))
@@ -237,6 +237,7 @@ def printRequerimiento4(respuesta):
     #PRIMER LUGAR
     print("\nPrimer Lugar: "+respuesta[1])
     print("Obras únicas: "+str(respuesta[5]))
+    print("SIZE LISTA PRIMER LUGAR",respuesta[4]["size"])
 
     field_names=["ObjectID","Title","Artists Names","Medium",
                 "Dimensions","Date","DateAcquired","URL"]
@@ -328,10 +329,10 @@ while True:
             fechaFinal=input("\nIngrese la fecha final (AAAA-MM-DD): ")
             tiempoInicial=time.process_time()
             resultado= controller.listarAdquisicionesCronologicamente(catalog, fechaInicial, fechaFinal)
-            try:
-                printRequerimiento2(resultado)
-            except:
-                print(resultado)
+            # try:
+            printRequerimiento2(resultado)
+            # except:
+            #     print(resultado)
 
         
         elif int(inputs[0]) == 3:

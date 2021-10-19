@@ -85,13 +85,13 @@ def newCatalog():
                                    maptype="CHAINING",
                                    loadfactor=4.0,
                                    comparefunction=compareNationality)
-    catalog["Artists_BeginDate"] = mp.newMap(2000, 
+    catalog["Artists_BeginDate"] = mp.newMap(331, #Hay 236 fechas únicas,331 numero primo
                                    maptype='CHAINING',
                                    loadfactor=4.0,
                                    comparefunction=compareBeginDate)
-    catalog["Department"] = mp.newMap(15, 
-                                   maptype='PROBING',
-                                   loadfactor=0.5,
+    catalog["Department"] = mp.newMap(13, #numero primo +5 espacios extras
+                                   maptype='CHAINING',
+                                   loadfactor=2.0,
                                    comparefunction=compareDepartment)
 
     ##Modificaciones mapa req 2
@@ -129,7 +129,7 @@ def newBeginDate(nacimiento):
     BeginDate={"FechaNacimiento":"",
                 "Artistas":None}
     BeginDate["FechaNacimiento"]=int(nacimiento)
-    BeginDate["Artistas"]=lt.newList("ARRAY_LIST") ##EDIT CAMBIO DE LISTA
+    BeginDate["Artistas"]=lt.newList("ARRAY_LIST")
     return BeginDate
 
 def newDateAcquired(fecha):
@@ -142,7 +142,7 @@ def newDateAcquired(fecha):
     #DateAcquired["DateAcquired"]=time.strptime(fecha,"%Y-%m-%d")
     DateAcquired["DateAcquired"]=fecha
     DateAcquired["Obras"]=lt.newList("ARRAY_LIST")
-    DateAcquired["CoddesArtistas"]=lt.newList("ARRAY_LIST")
+    DateAcquired["CoddesArtistas"]=lt.newList("ARRAY_LIST") #Eliminar dependiendo si NO se necesitan artistas diferentes
     return DateAcquired
 
 # Funciones para agregar informacion al catalogo
@@ -346,9 +346,10 @@ def listarAdquisicionesCronologicamente(catalog,fechaInicial,fechaFinal):  # Req
     recorrer=True
     n=0
     pos=1
-    elementosTotal=6
+    elementosTotal=6-1
     lista=ordenamientoSelection
-    mitad=elementosTotal/2
+    mitad=elementosTotal//2
+
     while recorrer:
         elemento=lt.getElement(ordenamientoSelection,pos)
         print(n,elemento)
@@ -367,15 +368,16 @@ def listarAdquisicionesCronologicamente(catalog,fechaInicial,fechaFinal):  # Req
             else:
                 for obraCatalogo in lt.iterator(catalog["artworks"]):
                     if obra==obraCatalogo["ObjectID"].strip(): #Codigo obra
-                        constituentID=obraCatalogo["ConstituentID"][1:-1] #se obtiene el constituentID que relaciona una obra con un artista
-                        codigoNum=constituentID.split(",")
-                        obraCatalogo["NombresArtistas"]="" #se inicializa la llave que contiene los nomnbres de los artistas
-                        for ID in codigoNum:
-                            artist=mp.get(catalog["artists"],ID.strip())["value"]["DisplayName"]
-                            obraCatalogo["NombresArtistas"]+=artist+","
+                        n+=1
+                        # constituentID=obraCatalogo["ConstituentID"][1:-1] #se obtiene el constituentID que relaciona una obra con un artista
+                        # codigoNum=constituentID.split(",")
+                        # obraCatalogo["NombresArtistas"]="" #se inicializa la llave que contiene los nomnbres de los artistas
+                        # for ID in codigoNum:
+                        #     artist=mp.get(catalog["artists"],ID.strip())["value"]["DisplayName"]
+                        obraCatalogo["NombresArtistas"]=nombresArtistas(catalog,obraCatalogo["ConstituentID"])
                         lt.addLast(rtaNElementos,obraCatalogo)
                         break
-                    n+=1
+                    
         if n>elementosTotal or n>lista["size"]:
             recorrer=False
 
@@ -385,6 +387,7 @@ def listarAdquisicionesCronologicamente(catalog,fechaInicial,fechaFinal):  # Req
             pos=lista["size"]
         else:
             pos-=1
+    selection.sortEdit(rtaNElementos,cmpADateAcquiredObra,3,ordenarInicio=False,ordenarFinal=True)
     return rtaNElementos,contadorPurchase,contadorObras,contadorArtistas
 
 def listarAdquisicionesCronologicamente0(catalog,fechaInicial,fechaFinal):  # Requerimiento Grupal 2: Función Principal
@@ -764,6 +767,10 @@ def cmpADateAcquired(date1,date2): #editt jenn
     fecha2=time.strptime(date2,"%Y-%m-%d")
     return fecha1<fecha2
 
+def cmpADateAcquiredObra(artwork1,artwork2): #editt jenn
+    fecha1=time.strptime(artwork1["DateAcquired"],"%Y-%m-%d")
+    fecha2=time.strptime(artwork2["DateAcquired"],"%Y-%m-%d")
+    return fecha1<fecha2
 
 def cmpArtworkByDateAcquired(artwork1, artwork2): # Requerimiento Grupal 2: Función Comparación Ordenamiento
     """ 
@@ -958,6 +965,15 @@ def listasRespuesta(lista,catalog,seccionCatalogo,requerimiento,elementosTotal=6
         else:
             pos-=1
     return listaRespuesta
+
+def nombresArtistas(catalog,ConstituentIDs):
+    nombres=""
+    constituentID=ConstituentIDs[1:-1] #se obtiene el constituentID que relaciona una obra con un artista
+    codigoNum=constituentID.split(",")
+    for ID in codigoNum:
+        artist=mp.get(catalog["artists"],ID.strip())["value"]["DisplayName"]
+        nombres+=artist+", "
+    return nombres[0:-2]
 
 def contarTiempo(start_time,stop_time): # TODO: Esto también creo que debe ir en el controlador
     # start_time = time.process_time()
