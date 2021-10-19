@@ -25,7 +25,7 @@
  """
 
 
-from DISClib.DataStructures.arraylist import newList
+from DISClib.DataStructures.arraylist import isPresent, newList
 import config as cf
 from DISClib.ADT import list as lt
 from DISClib.ADT import map as mp
@@ -93,6 +93,11 @@ def newCatalog():
                                    maptype='PROBING',
                                    loadfactor=0.5,
                                    comparefunction=compareDepartment)
+
+    ##Modificaciones mapa req 2
+    catalog["DateAcquiredArt"]=mp.newMap(2000, 
+                                   maptype='PROBING',
+                                   loadfactor=4)
     return catalog
 
 def NewNationalityArt(pais):
@@ -127,6 +132,18 @@ def newBeginDate(nacimiento):
     BeginDate["Artistas"]=lt.newList("ARRAY_LIST") ##EDIT CAMBIO DE LISTA
     return BeginDate
 
+def newDateAcquired(fecha):
+    DateAcquired={"DateAcquired":"",
+                "Obras":None,
+                "TotalObras":0,
+                "TotalArtistas":0,
+                "contadorPurchase":0,
+                "CoddesArtistas":None}
+    #DateAcquired["DateAcquired"]=time.strptime(fecha,"%Y-%m-%d")
+    DateAcquired["DateAcquired"]=fecha
+    DateAcquired["Obras"]=lt.newList("ARRAY_LIST")
+    DateAcquired["CoddesArtistas"]=lt.newList("ARRAY_LIST")
+    return DateAcquired
 
 # Funciones para agregar informacion al catalogo
 
@@ -156,30 +173,55 @@ def addArtwork(catalog, artwork):
     """
     lt.addLast(catalog["artworks"],artwork)
 
-    addNationality(catalog,artwork) #req nacionalidades
-
-    for consID in artwork["ConstituentID"].strip("[]").replace(" ","").split(","):
-        listaIndices=mp.get(catalog["artists"],consID)["value"]["artwork_index_list"] # Req 3 y 6
-        lt.addLast(listaIndices,lt.size(catalog["artworks"])) # Añadimos los indices en nuestro mapa para requerirlos en nuestros requerimientos
-    
-    initialYear=artwork["DateAcquired"].split("-")[0]
-    if initialYear.isnumeric():
-        initialYear=int(initialYear)
-    else:
-        initialYear=0
-
-    if mp.contains(catalog["artworks_index_by_initial_year"],initialYear):
-        lt.addLast(mp.get(catalog["artworks_index_by_initial_year"],initialYear)["value"],lt.size(catalog["artworks"]))
-
-    else:
-        listaIndicesArtwork=lt.newList("ARRAY_LIST")
-        lt.addLast(listaIndicesArtwork,lt.size(catalog["artworks"]))
-        mp.put(catalog["artworks_index_by_initial_year"],initialYear,listaIndicesArtwork)  
+    addNationality(catalog,artwork) #req nacionalidades    
+    if len(artwork["DateAcquired"])==10:
+        addDateAcquired(catalog,artwork)
     
     addDepartment(catalog,artwork)
 
+    # for consID in artwork["ConstituentID"].strip("[]").replace(" ","").split(","):
+    #     listaIndices=mp.get(catalog["artists"],consID)["value"]["artwork_index_list"] # Req 3 y 6
+    #     lt.addLast(listaIndices,lt.size(catalog["artworks"])) # Añadimos los indices en nuestro mapa para requerirlos en nuestros requerimientos
+    
+    # initialYear=artwork["DateAcquired"].split("-")[0]
+    # if initialYear.isnumeric():
+    #     initialYear=int(initialYear)
+    # else:
+    #     initialYear=0
+
+    # if mp.contains(catalog["artworks_index_by_initial_year"],initialYear):
+    #     lt.addLast(mp.get(catalog["artworks_index_by_initial_year"],initialYear)["value"],lt.size(catalog["artworks"]))
+
+    # else:
+    #     listaIndicesArtwork=lt.newList("ARRAY_LIST")
+    #     lt.addLast(listaIndicesArtwork,lt.size(catalog["artworks"]))
+    #     mp.put(catalog["artworks_index_by_initial_year"],initialYear,listaIndicesArtwork)  
 
 
+
+
+def addDateAcquired(catalog, artwork):
+    fecha=artwork["DateAcquired"]
+    existFecha=mp.contains(catalog["DateAcquiredArt"],fecha)
+    if existFecha:
+        entry=mp.get(catalog["DateAcquiredArt"],fecha)
+        fechaMap=me.getValue(entry)
+    else:
+        fechaMap=newDateAcquired(fecha)
+        mp.put(catalog["DateAcquiredArt"],fecha,fechaMap)
+    lt.addLast(fechaMap["Obras"],artwork["ObjectID"])
+    fechaMap["TotalObras"]+=1
+    # for consID in artwork["ConstituentID"].strip("[]").replace(" ","").split(","):
+    #     # if (lt.isPresent(fechaMap["CoddesArtistas"],consID))==0: ###Descomentar para no repetir artistas dentro de una SOLA fecha
+    #         fechaMap["TotalArtistas"]+=1
+    #         lt.addLast(fechaMap["CoddesArtistas"],consID)
+    
+    ##Artistas sin repetir, pero no está comprobado
+    borrardespues=len(artwork["ConstituentID"].strip("[]").replace(" ","").split(",")) #COMPROBAR DESPUÉS 
+    fechaMap["TotalArtistas"]=borrardespues
+    #print(artwork["ObjectID"],borrardespues)
+    if (artwork["CreditLine"].lower()).startswith("purchase"):
+        fechaMap["contadorPurchase"]+=1
 
 def addBeginDate(catalog,artist): #req 1 MAPA
     # TODO: Documentación
@@ -276,8 +318,72 @@ def listarArtistasCronologicamente(catalog,fechaInicial,fechaFinal): # Requerimi
     return listaNac,contador,respuestaLista
 
 
-
 def listarAdquisicionesCronologicamente(catalog,fechaInicial,fechaFinal):  # Requerimiento Grupal 2: Función Principal
+    inicial=time.strptime(fechaInicial,"%Y-%m-%d")
+    final=time.strptime(fechaFinal,"%Y-%m-%d")
+    fechasKeys=mp.keySet(catalog["DateAcquiredArt"])
+    listaRespuesta=lt.newList("ARRAY_LIST")
+    contadorObras=0
+    contadorArtistas=0
+    contadorPurchase=0
+    for fecha in lt.iterator(fechasKeys):
+        valoresFecha=mp.get(catalog["DateAcquiredArt"],fecha)["value"]
+        fechaAdquisicion=time.strptime(valoresFecha["DateAcquired"],"%Y-%m-%d")
+        if fechaAdquisicion>=inicial and fechaAdquisicion<=final:
+            contadorObras+=valoresFecha["TotalObras"]
+            contadorArtistas+=valoresFecha["TotalArtistas"]
+            contadorPurchase+=valoresFecha["contadorPurchase"]
+            lt.addLast(listaRespuesta,fecha)
+    ordenamientoSelection=selection.sortEdit(listaRespuesta,cmpADateAcquired,3,ordenarInicio=True,ordenarFinal=True)
+    print(ordenamientoSelection)
+    print("Q obras", contadorObras)
+    print("Q artistas",contadorArtistas)
+    rtaNElementos=lt.newList("ARRAY_LIST")
+    recorrer=True
+    n=0
+    pos=1
+    elementosTotal=6
+    lista=ordenamientoSelection
+    mitad=elementosTotal/2
+    while recorrer:
+        elemento=lt.getElement(ordenamientoSelection,pos)
+        print(n,elemento)
+        obrasLista=mp.get(catalog["DateAcquiredArt"],elemento)["value"]["Obras"]
+        for obra in lt.iterator(obrasLista):
+            if pos==0:
+                pos=lista["size"]
+
+            if n==mitad+1 and pos==1: #Para no quedarse solamente en el primer año en caso de que tenga muchos artistas
+                #print("NO MORE",artista,n)
+                break
+            elif n>elementosTotal and pos==lista["size"]:
+                #print("NO MORE END",artista,n)
+                recorrer=False
+                break
+            else:
+                for obraCatalogo in lt.iterator(catalog["artworks"]):
+                    if obra==obraCatalogo["ObjectID"].strip(): #Codigo obra
+                        constituentID=obraCatalogo["ConstituentID"][1:-1] #se obtiene el constituentID que relaciona una obra con un artista
+                        codigoNum=constituentID.split(",")
+                        obraCatalogo["NombresArtistas"]="" #se inicializa la llave que contiene los nomnbres de los artistas
+                        for ID in codigoNum:
+                            artist=mp.get(catalog["artists"],ID.strip())["value"]["DisplayName"]
+                            obraCatalogo["NombresArtistas"]+=artist+","
+                        lt.addLast(rtaNElementos,obraCatalogo)
+                        break
+                    n+=1
+        if n>elementosTotal or n>lista["size"]:
+            recorrer=False
+
+        if n<mitad:
+            pos+=1
+        elif n==mitad:
+            pos=lista["size"]
+        else:
+            pos-=1
+    return rtaNElementos,contadorPurchase,contadorObras,contadorArtistas,
+
+def listarAdquisicionesCronologicamente0(catalog,fechaInicial,fechaFinal):  # Requerimiento Grupal 2: Función Principal
     """ # TODO: Documentación
     La función primero agregará a una nueva array list (listaAdq) las obras que tengan
     una fecha de aquisición dentro del rango deseado. A su vez, se va a ir 
@@ -296,69 +402,68 @@ def listarAdquisicionesCronologicamente(catalog,fechaInicial,fechaFinal):  # Req
         contadorRango: total de obras en el rango de fechas
     """
 
-    # print("-------------------KEYS",mp.keySet(catalog['artworks_index_by_initial_year']))
-    # print("---------------- TABLE",catalog["artworks_index_by_initial_year"]["table"])
+    # print("-------------------KEYS",mp.keySet(catalog['DateAcquiredArt']))
+    # print("---------------- TABLE",catalog["DateAcquiredArt"]["table"])
     contadorPurchase=0
     
     
 
-    yearInitial=int(fechaInicial.split("-")[0])
-    yearFinal=int(fechaFinal.split("-")[0])
-    inicial=time.strptime(fechaInicial,"%Y-%m-%d")
-    final=time.strptime(fechaFinal,"%Y-%m-%d")
+    # yearInitial=int(fechaInicial.split("-")[0])
+    # yearFinal=int(fechaFinal.split("-")[0])
+    # inicial=time.strptime(fechaInicial,"%Y-%m-%d")
+    # final=time.strptime(fechaFinal,"%Y-%m-%d")
 
-    artistas=mp.newMap((yearFinal-yearInitial)*10, 
-                                   maptype="CHAINING",
-                                   loadfactor=4.0)
+    # artistas=mp.newMap((yearFinal-yearInitial)*10, 
+    #                                maptype="CHAINING",
+    #                                loadfactor=4.0)
 
 
-    # Caso año inicial
-    listaAdquisiciones=lt.newList('ARRAY_LIST')
-    if mp.contains(catalog["artworks_index_by_initial_year"],yearInitial):
-        listaArtworkYearIni=mp.get(catalog["artworks_index_by_initial_year"],yearInitial)["value"]
-        for index_artwork in lt.iterator(listaArtworkYearIni):
-            artw=lt.getElement(catalog["artworks"],index_artwork)
-            if inicial<=time.strptime(artw["DateAcquired"],"%Y-%m-%d"):
-               artw["ArtistsNames"]=nombresArtistas(catalog,artw["ConstituentID"],artistas)
-               lt.addLast(listaAdquisiciones,artw)
-               if "purchase" in artw["CreditLine"].lower():
-                        contadorPurchase+=1
-        listaAdquisiciones=sortList(listaAdquisiciones,cmpArtworkByDateAcquired)
+    # # Caso año inicial
+    # listaAdquisiciones=lt.newList('ARRAY_LIST')
+    # if mp.contains(catalog["artworks_index_by_initial_year"],yearInitial):
+    #     listaArtworkYearIni=mp.get(catalog["artworks_index_by_initial_year"],yearInitial)["value"]
+    #     for index_artwork in lt.iterator(listaArtworkYearIni):
+    #         artw=lt.getElement(catalog["artworks"],index_artwork)
+    #         if inicial<=time.strptime(artw["DateAcquired"],"%Y-%m-%d"):
+    #            artw["ArtistsNames"]=nombresArtistas(catalog,artw["ConstituentID"],artistas)
+    #            lt.addLast(listaAdquisiciones,artw)
+    #            if "purchase" in artw["CreditLine"].lower():
+    #                     contadorPurchase+=1
+    #     listaAdquisiciones=sortList(listaAdquisiciones,cmpArtworkByDateAcquired)
     
-    # Caso años interiores
-    year=yearInitial+1
-    while year<yearFinal:
-        lista=lt.newList('ARRAY_LIST')
-        if mp.contains(catalog["artworks_index_by_initial_year"],year):
-            listaArtworkYear=mp.get(catalog["artworks_index_by_initial_year"],year)["value"]
-            for index_artwork in lt.iterator(listaArtworkYear):
-                artw=lt.getElement(catalog["artworks"],index_artwork)
-                artw["ArtistsNames"]=nombresArtistas(catalog,artw["ConstituentID"],artistas)
-                lt.addLast(lista,artw)
+    # # Caso años interiores
+    # year=yearInitial+1
+    # while year<yearFinal:
+    #     lista=lt.newList('ARRAY_LIST')
+    #     if mp.contains(catalog["artworks_index_by_initial_year"],year):
+    #         listaArtworkYear=mp.get(catalog["artworks_index_by_initial_year"],year)["value"]
+    #         for index_artwork in lt.iterator(listaArtworkYear):
+    #             artw=lt.getElement(catalog["artworks"],index_artwork)
+    #             artw["ArtistsNames"]=nombresArtistas(catalog,artw["ConstituentID"],artistas)
+    #             lt.addLast(lista,artw)
             
-            lista=sortList(lista,cmpArtworkByDateAcquired)
-            for artwork in lt.iterator(lista):
-                lt.addLast(listaAdquisiciones,artwork)
-                if "purchase" in artwork["CreditLine"].lower():
-                        contadorPurchase+=1
-        year+=1
+    #         lista=sortList(lista,cmpArtworkByDateAcquired)
+    #         for artwork in lt.iterator(lista):
+    #             lt.addLast(listaAdquisiciones,artwork)
+    #             if "purchase" in artwork["CreditLine"].lower():
+    #                     contadorPurchase+=1
+    #     year+=1
     
-    # Caso año final
-    listaFinal=lt.newList('ARRAY_LIST')
-    if mp.contains(catalog["artworks_index_by_initial_year"],yearFinal):
-        listaArtworkYearFin=mp.get(catalog["artworks_index_by_initial_year"],yearFinal)["value"]
-        for index_artwork in lt.iterator(listaArtworkYearFin):
-            artw=lt.getElement(catalog["artworks"],index_artwork)
-            if final>=time.strptime(artw["DateAcquired"],"%Y-%m-%d"):
-               artw["ArtistsNames"]=nombresArtistas(catalog,artw["ConstituentID"],artistas)
-               lt.addLast(listaFinal,artw)
-        listaFinal=sortList(listaFinal,cmpArtworkByDateAcquired)
-        for artwork in lt.iterator(listaFinal):
-                lt.addLast(listaAdquisiciones,artwork)
-                if "purchase" in artwork["CreditLine"].lower():
-                        contadorPurchase+=1
-
-    return listaAdquisiciones, contadorPurchase, lt.size(listaAdquisiciones), lt.size(mp.valueSet(artistas))
+    # # Caso año final
+    # listaFinal=lt.newList('ARRAY_LIST')
+    # if mp.contains(catalog["artworks_index_by_initial_year"],yearFinal):
+    #     listaArtworkYearFin=mp.get(catalog["artworks_index_by_initial_year"],yearFinal)["value"]
+    #     for index_artwork in lt.iterator(listaArtworkYearFin):
+    #         artw=lt.getElement(catalog["artworks"],index_artwork)
+    #         if final>=time.strptime(artw["DateAcquired"],"%Y-%m-%d"):
+    #            artw["ArtistsNames"]=nombresArtistas(catalog,artw["ConstituentID"],artistas)
+    #            lt.addLast(listaFinal,artw)
+    #     listaFinal=sortList(listaFinal,cmpArtworkByDateAcquired)
+    #     for artwork in lt.iterator(listaFinal):
+    #             lt.addLast(listaAdquisiciones,artwork)
+    #             if "purchase" in artwork["CreditLine"].lower():
+    #                     contadorPurchase+=1
+    return None#listaAdquisiciones, contadorPurchase, lt.size(listaAdquisiciones), lt.size(mp.valueSet(artistas))
 
 def nombresArtistas(catalog,consIDs,artistas): #Función utilizada en varios req
     listaConsID=consIDs.strip("[]").replace(" ","").split(",")
@@ -645,6 +750,12 @@ def compareConsIDArtist(consIDArtist, entry): #MAPA
         return 1
     else:
         return -1
+
+def cmpADateAcquired(date1,date2): #editt jenn
+    fecha1=time.strptime(date1,"%Y-%m-%d")
+    fecha2=time.strptime(date2,"%Y-%m-%d")
+    return fecha1<fecha2
+
 
 def cmpArtworkByDateAcquired(artwork1, artwork2): # Requerimiento Grupal 2: Función Comparación Ordenamiento
     """ 

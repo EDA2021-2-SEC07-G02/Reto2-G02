@@ -92,7 +92,7 @@ def listarArtistasCronologicamente(catalog,fechaInicial,fechaFinal):
     Retorna a los artistas ordenados cronologicamente de acuerdo a un rango de fechas
     Además del total de artistas en ese rango de fechas
     """
-    return model.listarArtistasCronologicamente(catalog,int(fechaInicial),int(fechaFinal))
+    return model.listarArtistasCronologicamente(catalog,fechaInicial,fechaFinal)
 
 def listarAdquisicionesCronologicamente(catalog,fechaInicial,fechaFinal):
     """

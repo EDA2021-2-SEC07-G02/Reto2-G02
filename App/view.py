@@ -317,7 +317,10 @@ while True:
             fechaFinal=input("\nIngrese la fecha final (AAAA-MM-DD): ")
             tiempoInicial=time.process_time()
             resultado= controller.listarAdquisicionesCronologicamente(catalog, fechaInicial, fechaFinal)
-            printRequerimiento2(resultado)
+            try:
+                printRequerimiento2(resultado)
+            except:
+                print(resultado)
 
         
         elif int(inputs[0]) == 3:
