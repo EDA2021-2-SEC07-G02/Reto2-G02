@@ -41,13 +41,14 @@ operación solicitada
 
 def printMenu():
     print("-"*25+"Bienvenido"+ "-"*25)
+    print("0 - Cargar catálogo")
     print("1 - Listar cronológicamente los artistas")
     print("2 - Listar cronológicamente las adquisiciones")
     print("3 - Clasificar las obras de un artista por técnica")
     print("4 - Clasificar las obras por la nacionalidad de sus creadores")
     print("5 - Transportar obras de un departamento")
     print("6 - Artistas más prolíficos")
-    print("7- Salir")
+    print("7 - Salir")
 
 # Funciones de inicialización de catalogo y carga de datos
 catalog = None
@@ -81,33 +82,6 @@ def loadData(catalog,nArtists=6656,nArtWork=15008):
             directorio correcto")
 
 ##PrettyTable
-
-
-def printTableTransPricesArtworks(ord_artwork, cadena, sample=5): ###Borrar e implementarlo con la otra función
-    artPretty=PrettyTable(hrules=prettytable.ALL)
-    artPretty.field_names=["ObjectID","Title","ArtistsNames","Medium",
-                            "Date","Dimensions","Classification","TransCost (USD)","URL"]
-    artPretty.align="l"
-    artPretty._max_width = {"ObjectID" : 10, "Title" : 15,"ArtistsNames":13,"Medium":15,
-                            "Date":12,"Dimensions":10,"Classification":11,"TransCost (USD)":11,"URL":10}
-    size=ord_artwork["size"]
-    if size>=sample:
-        print("\nTOP "+str(sample) +" de las obras más "+cadena+" de transportar")
-        indices=range(1,sample+1)
-    else:
-        print("\nTOP "+str(size) +" de las obras más "+cadena+" de transportar")
-        indices=range(size)
-
-    for i in indices:
-        if i >= lt.size(ord_artwork):
-            break
-        artwork = lt.getElement(ord_artwork,i)
-        artPretty.add_row((artwork['ObjectID'],artwork['Title'],artwork['NombresArtistas'],artwork['Medium'],
-                            artwork['Date'],artwork['Dimensions'],artwork['Classification'],
-                            round(artwork['TransCost (USD)'],3),artwork['URL'] ))
-    print(artPretty)
-
-
 
 def printPrettyTable(lista, keys, field_names, max_width, sample=3, ultimas=False):
     artPretty=PrettyTable(hrules=prettytable.ALL)
@@ -161,7 +135,8 @@ def printRequerimiento1(resultado):
         printPrettyTable(resultado[2],keys,fieldNames,maxWidth,sample=3,ultimas=True)
 
     else:
-        print("\nNo  existe ninguna obra en las base de datos que haya sido registrada entre",fechaInicial,"y",fechaFinal,"o las fechas ingresadas no siguen el formato correcto.")
+        print("\nNo  existe ninguna obra en las base de datos que haya sido registrada entre",fechaInicial,"y",fechaFinal,
+        "o las fechas ingresadas no siguen el formato correcto.")
     controller.limpiarVar(resultado) #Se borra el resultado - Dato provisional
 
 def printRequerimiento2(resultado):
@@ -183,7 +158,8 @@ def printRequerimiento2(resultado):
         printPrettyTable(resultado[0],keys,fieldNames,maxWidth,sample=3,ultimas=True)
 
     else:
-        print("\nNo  existe ninguna obra en las base de datos que haya sido registrada entre",fechaInicial,"y",fechaFinal,"o las fechas ingresadas no siguen el formato correcto.")
+        print("\nNo  existe ninguna obra en las base de datos que haya sido registrada entre",fechaInicial,"y",fechaFinal,
+        "o las fechas ingresadas no siguen el formato correcto.")
     controller.limpiarVar(resultado) #Se borra el resultado - Dato provisional
 
 def printMediums(ord_mediums,top=5):
@@ -248,6 +224,28 @@ def printRequerimiento4(respuesta):
     
     print("Las primera y últimas obras del primer lugar:\n")
     printPrettyTable(respuesta[4],keys,field_names,max_width,sample=6)
+
+def printRequerimiento5(respuesta,nombreDepartamento):
+    listaObrasDepartamentoPrecio=respuesta[3]
+    listaObrasDepartamentoAntiguedad=respuesta[2]
+    precioTotal=respuesta[0]
+    pesoTotal=respuesta[1]
+    sizeLista=respuesta[4]
+
+    field_names=["ObjectID","Title","ArtistsNames","Medium",
+                            "Date","Dimensions","Classification","TransCost (USD)","URL"]
+    max_width = {"ObjectID" : 10, "Title" : 15,"ArtistsNames":13,"Medium":15,
+                            "Date":12,"Dimensions":10,"Classification":11,"TransCost (USD)":11,"URL":10}
+    keys=["ObjectID","Title",'NombresArtistas','Medium','Date', 'Dimensions', 'Classification','TransCost (USD)','URL']
+    
+    print("MoMA trasnportará",sizeLista,"obras del departamento de",nombreDepartamento)
+    print("\nEl peso total estimado es",str(pesoTotal)+"kg")
+    print("El precio estimado de transportar todas las obras del departamento es",str(precioTotal)+"USD")
+    
+    print("\nTOP 5 de las obras más antiguas de transportar")
+    printPrettyTable(listaObrasDepartamentoAntiguedad,keys,field_names,max_width,sample=5)
+    print("\nTOP 5 de las obras más costosas de transportar")
+    printPrettyTable(listaObrasDepartamentoPrecio,keys,field_names,max_width,sample=5)
 
 def printRequerimiento6(respuesta,fecha_inicial,fecha_final,n):
     artistas=respuesta[0]
@@ -349,12 +347,6 @@ while True:
             print("...Cargando top10 de nacionalidades de acuerdo a sus obras ")
             respuesta=controller.clasificarObrasNacionalidad(catalog)
             printRequerimiento4(respuesta)
-            # print("***TIEMPO SIN PRETTY TABLES: ",str((time.process_time()-tiempoInicial)*1000))
-            # print("\n Top 10 países por obras")
-            # print("\n Total países: " + str(respuesta[3]))
-            # printNationalityArt(respuesta[0])
-
-            # printResultsArt(respuesta[4],"")
 
         # Opción 0: Salir
         elif int(inputs[0]) == 5: ##Implementarlo de la otra forma xd
@@ -362,22 +354,7 @@ while True:
             nombreDepartamento=input("\nIngrese el nombre del departamento: ")
             tiempoInicial=time.process_time()
             respuesta=controller.transportarObrasDespartamento(catalog,nombreDepartamento)
-            listaObrasDepartamentoPrecio=respuesta[3]
-            listaObrasDepartamentoAntiguedad=respuesta[2]
-            precioTotal=respuesta[0]
-            pesoTotal=respuesta[1]
-            sizeLista=respuesta[4]
-            if sizeLista>0:
-                print("MoMA trasnportará",sizeLista,"obras del departamento de",nombreDepartamento)
-                print("\nEl peso total estimado es",str(pesoTotal)+"kg")
-                print("El precio estimado de transportar todas las obras del departamento es",str(precioTotal)+"USD")
-                
-                print("Obras más antiguas")
-                printTableTransPricesArtworks(listaObrasDepartamentoAntiguedad," ANTIGUAS ")
-                print("Obras más costosas")
-                printTableTransPricesArtworks(listaObrasDepartamentoPrecio," COSTOSAS ")
-            else:
-                print("El departamento",nombreDepartamento,"no existe o no tiene obras registradas.")
+            printRequerimiento5(respuesta,nombreDepartamento)
 
         elif int(inputs[0]) == 6:
             tiempoInicial=time.process_time()
