@@ -536,19 +536,21 @@ def transportarObrasDespartamento(catalog,departamento): # Requerimiento Grupal 
             precioPorPeso=0
             precioPorM2=0
             precioPorM3=0
-            precioPorPeso=PRECIO_ENVIO_UNIDAD/100
+            #precioPorPeso=PRECIO_ENVIO_UNIDAD/100
             if peso.isnumeric(): #KG   #se comprueba que peso no sea una cadena vacia 
                 precioPorPeso=PRECIO_ENVIO_UNIDAD*(float(peso)) #if len(peso)>0 else 0
                 pesoTotal+=peso
             #Se comprueban si cada una de las medidas es una cadena de str vacía. Si alguno de ellos es verdad se cambia a 100 dado que son cm
-            if len(altura)==0:
-                altura=100
-            if len(ancho)==0:
-                ancho=100
-            if len(profundidad)==0:
-                profundidad=100
-            precioPorM2=PRECIO_ENVIO_UNIDAD*(float(altura)/100)*(float(ancho)/100) #if len(peso)>0 else 0
-            precioPorM3=PRECIO_ENVIO_UNIDAD*(float(altura)/100)*(float(ancho)/100)*(float(profundidad)/100) #if len(peso)>0 else 0
+            # if len(altura)==0:
+            #     altura=100
+            # if len(ancho)==0:
+            #     ancho=100
+            # if len(profundidad)==0:
+            #     profundidad=100
+            if altura!="" and ancho!="":
+                precioPorM2=PRECIO_ENVIO_UNIDAD*(float(altura)/100)*(float(ancho)/100) #if len(peso)>0 else 0
+            if altura!="" and ancho!="" and profundidad!="":
+                precioPorM3=PRECIO_ENVIO_UNIDAD*(float(altura)/100)*(float(ancho)/100)*(float(profundidad)/100) #if len(peso)>0 else 0
             precioEnvio=max(precioPorM2,precioPorM3,precioPorPeso)
             if precioEnvio==0:
                 precioEnvio=PRECIO_ENVIO_FIJO
@@ -561,7 +563,7 @@ def transportarObrasDespartamento(catalog,departamento): # Requerimiento Grupal 
     fechaSorted=lt.subList((selection.sortEdit(obrasArteDepto,cmpArtworkByDate,5)),1,5)#lista ordenada por fecha
     respuestaLPrecio=precioSorted#listasRespuesta(precioSorted,catalog,"",requerimiento="req5",elementosTotal=5)
     respuestaLFecha=fechaSorted#listasRespuesta(fechaSorted,catalog,"",requerimiento="req5",elementosTotal=5)
-    return precioTotalEnvio, pesoTotal,respuestaLFecha,respuestaLPrecio,size
+    return precioTotalEnvio, pesoTotal,respuestaLFecha,respuestaLPrecio,size,obrasArteDepto
 
 
 def artistasMasProlificos(catalog,fecha_inicio,fecha_final,numero_artistas): # Requerimiento Bono 6: Función Única
@@ -820,7 +822,11 @@ def cmpArtistDate(fecha1,fecha2):
     """
     return fecha1<fecha2
 
-
+def cmpArtistaDateRespues(artist1,artist2):
+    """
+    Cmp para ordenar los artistas de la lista pequeña de respuesta del req 1
+    """
+    return artist1["BeginDate"]<artist2["BeginDate"]
 # Funciones de ordenamiento 
 
 def sortList(lista,cmpFunction,sortType=3):
@@ -849,6 +855,7 @@ def sortList(lista,cmpFunction,sortType=3):
 
 def listasRespuesta(lista,catalog,seccionCatalogo,requerimiento,elementosTotal=6,ordenarSoloInicio=True): ##Borrar después xd o modificar xd
     """
+    FUNCIÓN COMPLEMENTARIA REQ 1
     La función buscará los n primeros y últimos elementos de una lista,
     los cuales se guardarán en una nueva array list que será usadada para
     mostrar resultados al usuario en el view.
@@ -861,51 +868,39 @@ def listasRespuesta(lista,catalog,seccionCatalogo,requerimiento,elementosTotal=6
         requerimiento: se agregará info a los elementos dependiendo del requerimiento
     """
     listaRespuesta=lt.newList("ARRAY_LIST")
-    n=1
+    n=0
     pos=1
     recorrer=True
     mitad=elementosTotal//2
     precioTransporte=0
     while recorrer:
         elemento=lt.getElement(lista,pos)
-        #print(n,"Pos:",pos,elemento)
-        if requerimiento=="req4" or requerimiento=="req5":
-            if requerimiento=="req5":
-                precioTransporte=elemento["TransCost (USD)"]
-                elemento=elemento["ObjectID"]
-                obra=encontrarObraArte(catalog,elemento,precioTransporte)
-                lt.addLast(listaRespuesta,obra)
+        artistasLista=mp.get(catalog["Artists_BeginDate"],str(elemento))["value"]["Artistas"]
+        for artista in lt.iterator(artistasLista):
+            if pos==0:
+                pos=lista["size"]
+
+            if n==mitad and pos==1: #Para no quedarse solamente en el primer año en caso de que tenga muchos artistas
+                #print("NO MORE",artista,n)
+                break
+            elif n>=elementosTotal:
+                #print("NO MORE END",artista,n)
+                recorrer=False
+                break
+            else:
+                artista=mp.get(catalog["artists"],artista)["value"]
+                lt.addLast(listaRespuesta,artista)
                 n+=1
-
-        elif requerimiento=="req1":
-            artistasLista=mp.get(catalog["Artists_BeginDate"],str(elemento))["value"]["Artistas"]
-            for artista in lt.iterator(artistasLista):
-                if pos==0:
-                    pos=lista["size"]
-
-                if n==mitad+1 and pos==1: #Para no quedarse solamente en el primer año en caso de que tenga muchos artistas
-                    #print("NO MORE",artista,n)
-                    break
-                elif n>elementosTotal and pos==lista["size"]:
-                    #print("NO MORE END",artista,n)
-                    recorrer=False
-                    break
-                else:
-                    artista=mp.get(catalog["artists"],artista)["value"]
-                    lt.addLast(listaRespuesta,artista)
-                    n+=1
-        if n>elementosTotal+1 and requerimiento=="req5":
-            recorrer=False
 
         if n>elementosTotal or n>lista["size"]:
             recorrer=False
-        
-        if n<mitad or requerimiento=="req5":
+        if n<mitad:
             pos+=1
         elif n==mitad:
             pos=lista["size"]
         else:
             pos-=1
+    selection.sortEdit(listaRespuesta,cmpArtistaDateRespues,3,ordenarInicio=False,ordenarFinal=True)
     return listaRespuesta
 
 
