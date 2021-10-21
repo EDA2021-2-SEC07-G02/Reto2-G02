@@ -25,6 +25,7 @@
  """
 
 
+from App.controller import buscarNacionalidad
 from DISClib.DataStructures.arraylist import isPresent, newList
 import config as cf
 from DISClib.ADT import list as lt
@@ -57,7 +58,6 @@ def newCatalog():
     catalog = {'artists': None,
                'artworks': None,
                "nationalities":None,
-               "DateAcquiredArt":None,
                "Department":None,
                "artists_index_name":None,
                "Artists_BeginDate":None}
@@ -94,10 +94,6 @@ def newCatalog():
                                    loadfactor=2.0,
                                    comparefunction=compareDepartment)
 
-    ##Modificaciones mapa req 2
-    catalog["DateAcquiredArt"]=mp.newMap(2000, 
-                                   maptype='PROBING',
-                                   loadfactor=4)
     return catalog
 
 def NewNationalityArt(pais):
@@ -159,13 +155,11 @@ def addArtwork(catalog, artwork):
     Se añade la obra de arte al mapa de artworks,mediums y nationalities
     """
     lt.addLast(catalog["artworks"],artwork)
-
-    addNationality(catalog,artwork) #req nacionalidades    
-
-    
+       
     index=lt.size(catalog["artworks"])
     addDepartment(catalog,artwork,index)
     addArtworkIndexByYear(catalog,artwork)
+    addNationality(catalog,artwork,index) #req nacionalidades 
 
     for consID in artwork["ConstituentID"].strip("[]").replace(" ","").split(","):
         listaIndices=mp.get(catalog["artists"],consID)["value"]["artwork_index_list"] # Req 3 y 6
@@ -211,7 +205,7 @@ def addBeginDate(catalog,artist): #req 1 MAPA
 
 
     
-def addNationality(catalog,artwork):
+def addNationality(catalog,artwork,index):
     # nacionalidades
     """
     La función agrega la obra entregada por parámetro al mapa de nacionalidades.
@@ -221,7 +215,7 @@ def addNationality(catalog,artwork):
     """
     constituentID=artwork["ConstituentID"][1:-1] #se obtiene el constituentID que relaciona una obra con un artista
     codigoNum=constituentID.split(",")
-    objectID=artwork["ObjectID"]
+    #objectID=artwork["ObjectID"]
     nacionalidadesObra=lt.newList("ARRAY_LIST")
     for ID in codigoNum:
         conID=ID.strip() #se eliminan los espacios en blanco
@@ -243,7 +237,7 @@ def addNationality(catalog,artwork):
         if lt.isPresent(nacionalidadesObra,nationality)==0:
             lt.addLast(nacionalidadesObra,nationality)
             nationalityMap["ObrasUnicas"]+=1
-            lt.addLast(nationalityMap["Artworks"],objectID) #Se añade solamente el objectID, y solo se añade una vez la obra por nacionalidad
+            lt.addLast(nationalityMap["Artworks"],index) #Se añade solamente el index
         nationalityMap["Total_obras"]+=1
     nacionalidadesObra=None #Se elimina lista provisional
 
@@ -472,10 +466,12 @@ def clasificarObrasNacionalidad(catalog): # Requerimiento Individual 4: Función
     i=1
     n=0
     recorrer=True
+    print(listaObrasPrimerL)
     while recorrer: #and i<sizeObrasUnicas+1:
         elemento=lt.getElement(obrasUnicas,i)
         #print("Pos",i,"ele",elemento)
-        obra=encontrarObraArte(catalog,elemento)
+        obra=lt.getElement(catalog["artworks"],elemento)
+        obra["NombresArtistas"]=nombresArtistas(catalog,obra["ConstituentID"])
         lt.addLast(rtaNElementos,obra)
         n+=1
         if n>6 or n>sizeObrasUnicas:
@@ -486,18 +482,8 @@ def clasificarObrasNacionalidad(catalog): # Requerimiento Individual 4: Función
             i-=1
         else:
             i+=1
-    return top10,keyPrimerlugar,nationalitiesQ,sizeNationalitiesQ,rtaNElementos,sizeObrasUnicas #nationalitiesQ solamente para lab6, borrar después 
+    return top10,keyPrimerlugar,nationalitiesQ,sizeNationalitiesQ,rtaNElementos,sizeObrasUnicas
 
-def encontrarObraArte(catalog,objectID,precioTransporte=0): # Requerimiento 4 y 5: Función Complementaria
-    obraAdevolver=None
-    for obra in lt.iterator(catalog["artworks"]):
-        if objectID==obra["ObjectID"].strip(): #Codigo obra
-            constituentID=obra["ConstituentID"]#[1:-1] #se obtiene el constituentID que relaciona una obra con un artista
-            obra["NombresArtistas"]=nombresArtistas(catalog,constituentID)[0] #llave que contiene los nomnbres de los artistas
-            obra["TransCost (USD)"]=precioTransporte
-            obraAdevolver=obra
-            break
-    return obraAdevolver
 
 def transportarObrasDespartamento(catalog,departamento): # Requerimiento Grupal 5: Función Principal
     """
@@ -509,11 +495,12 @@ def transportarObrasDespartamento(catalog,departamento): # Requerimiento Grupal 
         catalog: catalogo con obras y artistas
         departamento: nombre del departamento a transportar
     Retorno:
-        precioSortedList: lista de obras organizadas por precio
-        obrasDepartamento: lista de obras organizadas por fecha de antiguedad 
+        precioSortedList: lista de obras organizadas por precio (solamente 5 primeras)
+        obrasDepartamento: lista de obras organizadas por fecha de antiguedad (solamente 5 primeras)
         precioTotalEnvio: costo total de transportar las obras
         pesoTotal: peso total de las obras
         cantidadDeObras: cantidad de obras a transportar
+        obrasArteDepto: todas las obras de este departamento
     """
 
     # Constantes
@@ -538,7 +525,7 @@ def transportarObrasDespartamento(catalog,departamento): # Requerimiento Grupal 
             precioPorM3=0
             #precioPorPeso=PRECIO_ENVIO_UNIDAD/100
             if peso.isnumeric(): #KG   #se comprueba que peso no sea una cadena vacia 
-                precioPorPeso=PRECIO_ENVIO_UNIDAD*(float(peso)) #if len(peso)>0 else 0
+                precioPorPeso=PRECIO_ENVIO_UNIDAD*(float(peso)/100) #if len(peso)>0 else 0
                 pesoTotal+=peso
             #Se comprueban si cada una de las medidas es una cadena de str vacía. Si alguno de ellos es verdad se cambia a 100 dado que son cm
             # if len(altura)==0:
@@ -554,7 +541,7 @@ def transportarObrasDespartamento(catalog,departamento): # Requerimiento Grupal 
             precioEnvio=max(precioPorM2,precioPorM3,precioPorPeso)
             if precioEnvio==0:
                 precioEnvio=PRECIO_ENVIO_FIJO
-            obra["TransCost (USD)"]=precioEnvio
+            obra["TransCost (USD)"]=round(precioEnvio,4)
             precioTotalEnvio+=precioEnvio
     
     size=obrasArteDepto["size"]
