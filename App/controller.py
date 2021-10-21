@@ -46,8 +46,8 @@ def loadData(catalog,nArtists=6656,nArtWork=15008): #10 pct parámetros
     """
     Carga los artistas y obras al catalogo
     """
-    muestra=input("PRUEBA- Ingrese la muestra:  ")
-    print("*************PRUEBAS CON MUESTRA TAMAÑO "+muestra+" *********")
+    muestra="small"
+    #print("*************PRUEBAS CON MUESTRA TAMAÑO "+muestra+" *********")
     loadArtists(catalog,nArtists,muestra)
     loadArtworks(catalog,nArtWork,muestra)
 

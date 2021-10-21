@@ -213,7 +213,6 @@ def printRequerimiento4(respuesta):
     #PRIMER LUGAR
     print("\nPrimer Lugar: "+respuesta[1])
     print("Obras únicas: "+str(respuesta[5]))
-    print("SIZE LISTA PRIMER LUGAR",respuesta[4]["size"])
 
     field_names=["ObjectID","Title","Artists Names","Medium",
                 "Dimensions","Date","DateAcquired","URL"]

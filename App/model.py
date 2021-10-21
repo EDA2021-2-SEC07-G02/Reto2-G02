@@ -215,7 +215,6 @@ def addNationality(catalog,artwork,index):
     """
     constituentID=artwork["ConstituentID"][1:-1] #se obtiene el constituentID que relaciona una obra con un artista
     codigoNum=constituentID.split(",")
-    #objectID=artwork["ObjectID"]
     nacionalidadesObra=lt.newList("ARRAY_LIST")
     for ID in codigoNum:
         conID=ID.strip() #se eliminan los espacios en blanco
@@ -466,10 +465,8 @@ def clasificarObrasNacionalidad(catalog): # Requerimiento Individual 4: Función
     i=1
     n=0
     recorrer=True
-    print(listaObrasPrimerL)
-    while recorrer: #and i<sizeObrasUnicas+1:
+    while recorrer: 
         elemento=lt.getElement(obrasUnicas,i)
-        #print("Pos",i,"ele",elemento)
         obra=lt.getElement(catalog["artworks"],elemento)
         obra["NombresArtistas"]=nombresArtistas(catalog,obra["ConstituentID"])
         lt.addLast(rtaNElementos,obra)
@@ -527,9 +524,9 @@ def transportarObrasDespartamento(catalog,departamento): # Requerimiento Grupal 
             if peso.isnumeric(): #KG   #se comprueba que peso no sea una cadena vacia 
                 precioPorPeso=PRECIO_ENVIO_UNIDAD*(float(peso)/100) #if len(peso)>0 else 0
                 pesoTotal+=peso
-            elif altura!="" and ancho!="" and profundidad!="":
+            if altura!="" and ancho!="" and profundidad!="":
                 precioPorM3=PRECIO_ENVIO_UNIDAD*(float(altura)/100)*(float(ancho)/100)*(float(profundidad)/100) #if len(peso)>0 else 0
-            elif altura!="" and ancho!="":
+            if altura!="" and ancho!="":
                 precioPorM2=PRECIO_ENVIO_UNIDAD*(float(altura)/100)*(float(ancho)/100) #if len(peso)>0 else 0
             
             precioEnvio=max(precioPorM2,precioPorM3,precioPorPeso)
