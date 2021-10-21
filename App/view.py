@@ -147,11 +147,11 @@ def printRequerimiento2(resultado):
         fieldNames= ["ObjectID","Title","Artists Names","Medium",
                             "Dimensions","Date","DateAcquired","URL"]
 
-        keys= ["ObjectID","Title","NombresArtistas","Medium",
+        keys= ["ObjectID","Title","ArtistsNames","Medium",
                             "Dimensions","Date","DateAcquired","URL"]
         
         print("\nEl total de obras en el rango de fechas "+fechaInicial+" - "+fechaFinal+" es: "+str(resultado[2]))
-        print("\nEl total de diferentes artistas para la obras seleccionadas en el rango: "+str(resultado[3]))
+        print("\nEl total de artistas para la obras seleccionadas en el rango: "+str(resultado[3]))
         print("\nEl total de obras compradadas ('Purchase') en el rango de fechas "+fechaInicial+" - "+fechaFinal+" es: "+str(resultado[1]))
         print("\nLas tres primeras y tres ultimas obras del rango se registran en la siguiente tabla:")
 
