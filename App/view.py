@@ -247,9 +247,12 @@ def printRequerimiento5(respuesta,nombreDepartamento):
     print("\nTOP 5 de las obras más costosas de transportar")
     printPrettyTable(listaObrasDepartamentoPrecio,keys,field_names,max_width,sample=5)
 
+
+
 def printRequerimiento6(respuesta,fecha_inicial,fecha_final,n):
     artistas=respuesta[0]
     numArtistas=respuesta[1]
+    obrasArtista=respuesta[2]
     if(numArtistas>0):
         print("\n Hay",numArtistas," artistas en el periodo de",str(fecha_inicial),"a",str(fecha_final))
         print("\nLos",str(n),"artistas más prolíficos son:")
@@ -260,6 +263,18 @@ def printRequerimiento6(respuesta,fecha_inicial,fecha_final,n):
         maxWidth = {"ConstituentID":10,"DisplayName":10,"BeginDate":5,"Gender":5,"ArtistBio":10,
                             "Wiki QID":5,"ULAN":10,"ArtworkNumber":5,"MediumNumber":5,"TopMedium":5}
         printPrettyTable(artistas,keys,fieldNames,maxWidth,sample=n,ultimas=False)
+
+        print("\n\nLas cinco primeras obras ordenadas por fecha de adquisición de",lt.getElement(artistas,1)["DisplayName"],"son: \n")
+
+        keys=["ObjectID","Title","Medium","Date","Dimensions",
+                            "DateAcquired","Department","Classification","URL"]
+        fieldNames=["ObjectID","Title","Medium","Date","Dimensions",
+                            "DateAcquired","Department","Classification","URL"]
+        maxWidth = {"ObjectID" : 10, "Title" : 15,"Medium":13,
+                            "Date":12,"Dimensions":15,"DateAcquired":11,"Department":10,"Classification":10,"URL":10}
+
+        printPrettyTable(obrasArtista,keys,fieldNames,maxWidth,sample=5,ultimas=False)
+
 
     else:
         print("\nNo hay artistas en el rango seleccionado")
@@ -275,8 +290,8 @@ def printCapacidadesMapas(catalog):
     print("Tamaño de mapa artistas: ",catalog["artists"]["size"])
     print("Capacidad final mapa artistas: ",catalog["artists"]["capacity"])
     #DateAcquiredArt
-    print("\nTamaño de mapa fechas de adquisición obras: ",catalog["DateAcquiredArt"]["size"])
-    print("Capacidad final mapa fechas de adquisición obras: ",catalog["DateAcquiredArt"]["capacity"])
+    print("\nTamaño de mapa fechas de adquisición obras: ",catalog["artworks_index_by_year"]["size"])
+    print("Capacidad final mapa fechas de adquisición obras: ",catalog["artworks_index_by_year"]["capacity"])
     
     print("\nTamaño de mapa fechas de nacimiento artistas: ",catalog["Artists_BeginDate"]["size"])
     print("Capacidad final mapa fechas de nacimiento artistas: ",catalog["Artists_BeginDate"]["capacity"])
@@ -298,6 +313,7 @@ Menu principal
 """
 while True:
     printMenu()
+    tiempoInicial=time.process_time()
     inputs = input('Seleccione una opción para continuar\n')
     if inputs.isnumeric:
         if int(inputs[0]) == 0:

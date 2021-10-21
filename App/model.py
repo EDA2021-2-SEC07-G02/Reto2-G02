@@ -527,17 +527,11 @@ def transportarObrasDespartamento(catalog,departamento): # Requerimiento Grupal 
             if peso.isnumeric(): #KG   #se comprueba que peso no sea una cadena vacia 
                 precioPorPeso=PRECIO_ENVIO_UNIDAD*(float(peso)/100) #if len(peso)>0 else 0
                 pesoTotal+=peso
-            #Se comprueban si cada una de las medidas es una cadena de str vacía. Si alguno de ellos es verdad se cambia a 100 dado que son cm
-            # if len(altura)==0:
-            #     altura=100
-            # if len(ancho)==0:
-            #     ancho=100
-            # if len(profundidad)==0:
-            #     profundidad=100
-            if altura!="" and ancho!="":
-                precioPorM2=PRECIO_ENVIO_UNIDAD*(float(altura)/100)*(float(ancho)/100) #if len(peso)>0 else 0
-            if altura!="" and ancho!="" and profundidad!="":
+            elif altura!="" and ancho!="" and profundidad!="":
                 precioPorM3=PRECIO_ENVIO_UNIDAD*(float(altura)/100)*(float(ancho)/100)*(float(profundidad)/100) #if len(peso)>0 else 0
+            elif altura!="" and ancho!="":
+                precioPorM2=PRECIO_ENVIO_UNIDAD*(float(altura)/100)*(float(ancho)/100) #if len(peso)>0 else 0
+            
             precioEnvio=max(precioPorM2,precioPorM3,precioPorPeso)
             if precioEnvio==0:
                 precioEnvio=PRECIO_ENVIO_FIJO
@@ -553,6 +547,7 @@ def transportarObrasDespartamento(catalog,departamento): # Requerimiento Grupal 
     return precioTotalEnvio, pesoTotal,respuestaLFecha,respuestaLPrecio,size,obrasArteDepto
 
 
+
 def artistasMasProlificos(catalog,fecha_inicio,fecha_final,numero_artistas): # Requerimiento Bono 6: Función Única
     """
     Se entrega una lista de los n artista más prolificos, por número de obras y técnicas utilizadas
@@ -561,29 +556,28 @@ def artistasMasProlificos(catalog,fecha_inicio,fecha_final,numero_artistas): # R
         fecha_inicio: rango inicial (AAAA)
         fecha_final: limite superior (AAAA)
         numero_artistas: n artistas que se desean mostrar
-    Se añade la obra de arte al mapa de artworks,mediums y nationalities
+    Retorno:
+        artistasMasProlificos: lista con los n artitas mas prolificos
+        numeroArtistasRango: numero de artistas en el rango de fechas
+        listaObrasSort: lista organizada de obras del artista más prolifico
     """
-    # llavesArtistas=mp.keySet(catalog["artists"])
-    # llavesArtistas0=lt.subList(llavesArtistas,0,lt.size(llavesArtistas)) 
+    llavesArtistas=mp.keySet(catalog["artists"])
+    llavesArtistas=lt.subList(llavesArtistas,0,lt.size(llavesArtistas)) 
     gruposArtistas=lt.newList("ARRAY_LIST")
     numeroMaximo=0
-    artistasRango=listarArtistasCronologicamente(catalog,fecha_inicio,fecha_final)[0]
-    artistasRango=lt.subList(artistasRango,1,lt.size(artistasRango))
-    contadorArtistas=0
-    
 
     primerRecorrido=True
-    numeroArtistasRango=artistasRango["size"]
+    numeroArtistasRango=1
 
     while numeroMaximo<numero_artistas:
         listaArtistas=lt.newList("ARRAY_LIST")
         maxObras=-1
         contLlaves=1
-        for fecha in lt.iterator(artistasRango):
-            artistasCode=mp.get(catalog["Artists_BeginDate"],str(fecha))["value"]["Artistas"]
-            for artista in lt.iterator(artistasCode):
-                contadorArtistas+=1
-                artista=mp.get(catalog["artists"],artista)["value"]
+        for consID in lt.iterator(llavesArtistas):
+            artista=mp.get(catalog["artists"],consID)["value"]
+            if fecha_inicio<=int(artista["BeginDate"]) and fecha_final>=int(artista["BeginDate"]):
+                if(primerRecorrido):
+                    numeroArtistasRango+=1
                 numero_obras=lt.size(artista["artwork_index_list"])
                 if numero_obras>maxObras:
                     maxObras=numero_obras
@@ -597,12 +591,17 @@ def artistasMasProlificos(catalog,fecha_inicio,fecha_final,numero_artistas): # R
                     lt.addLast(listaArtistas,artista)
             contLlaves+=1
 
-        for artistaASacar in lt.iterator(listaArtistas): ###???????? si elimino estas lineas no funciona el modelo xd
-            lt.deleteElement(artistasRango,artistaASacar["posicionListaLLaves"]) #se eliminaría una fecha (???)
-            print(artistaASacar["DisplayName"])
+        primerRecorrido=False
+
+            
+        cont=lt.size(listaArtistas)
+        while cont>=1:
+            lt.deleteElement(llavesArtistas,lt.getElement(listaArtistas,cont)["posicionListaLLaves"])
+            cont-=1
+
+
 
         numeroMaximo+=lt.size(listaArtistas)
-        print(listaArtistas)
         lt.addLast(gruposArtistas,listaArtistas)
 
     artistasMasProlificos=lt.newList("ARRAY_LIST")
@@ -622,9 +621,17 @@ def artistasMasProlificos(catalog,fecha_inicio,fecha_final,numero_artistas): # R
         
     
     if lt.size(artistasMasProlificos)>numero_artistas:
-        artistasMasProlificos=lt.subList(artistasMasProlificos,0,numero_artistas)
+        artistasMasProlificos=lt.subList(artistasMasProlificos,1,numero_artistas)
+
+    listaIndicesObras=lt.getElement(artistasMasProlificos,1)["artwork_index_list"]
+
+    obrasArtista=lt.newList("ARRAY_LIST")
+    for indexObra in lt.iterator(listaIndicesObras):
+        lt.addLast(obrasArtista,lt.getElement(catalog["artworks"],indexObra))
     
-    return artistasMasProlificos, contadorArtistas
+    listaObrasSort=sortList(obrasArtista,cmpArtworkByDateAcquired)
+    
+    return artistasMasProlificos, numeroArtistasRango, listaObrasSort
 
 #Funciones de comparación
 
