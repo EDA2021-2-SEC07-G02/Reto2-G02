@@ -578,19 +578,19 @@ def artistasMasProlificos(catalog,fecha_inicio,fecha_final,numero_artistas): # R
     # llavesArtistas0=lt.subList(llavesArtistas,0,lt.size(llavesArtistas)) 
     gruposArtistas=lt.newList("ARRAY_LIST")
     numeroMaximo=0
-    fechasArtistas=listarArtistasCronologicamente(catalog,fecha_inicio,fecha_final)[0]
-    print(fechasArtistas)
+    artistasRango=listarArtistasCronologicamente(catalog,fecha_inicio,fecha_final)[0]
+    artistasRango=lt.subList(artistasRango,1,lt.size(artistasRango))
     contadorArtistas=0
     
 
     primerRecorrido=True
-    numeroArtistasRango=fechasArtistas["size"]
+    numeroArtistasRango=artistasRango["size"]
 
     while numeroMaximo<numero_artistas:
         listaArtistas=lt.newList("ARRAY_LIST")
         maxObras=-1
         contLlaves=1
-        for fecha in lt.iterator(fechasArtistas):
+        for fecha in lt.iterator(artistasRango):
             artistasCode=mp.get(catalog["Artists_BeginDate"],str(fecha))["value"]["Artistas"]
             for artista in lt.iterator(artistasCode):
                 contadorArtistas+=1
@@ -609,7 +609,8 @@ def artistasMasProlificos(catalog,fecha_inicio,fecha_final,numero_artistas): # R
             contLlaves+=1
 
         for artistaASacar in lt.iterator(listaArtistas): ###???????? si elimino estas lineas no funciona el modelo xd
-            lt.deleteElement(fechasArtistas,artistaASacar["posicionListaLLaves"]) #se eliminaría una fecha (???)
+            lt.deleteElement(artistasRango,artistaASacar["posicionListaLLaves"]) #se eliminaría una fecha (???)
+            print(artistaASacar["DisplayName"])
 
         numeroMaximo+=lt.size(listaArtistas)
         print(listaArtistas)
@@ -834,11 +835,13 @@ def sortList(lista,cmpFunction,sortType=3):
     Retorno:
         lista ordenada por insertion
     """
-    if sortType == "1":
+    if sortType == 1:
         sorted_list= selection.sort(lista,cmpFunction) 
-    elif sortType == "2":
+    elif sortType == 2:
         sorted_list= sa.sort(lista,cmpFunction)
-    elif sortType == "3":
+    elif sortType == 3:
+        sorted_list= ms.sort(lista,cmpFunction)
+    else:
         sorted_list= ms.sort(lista,cmpFunction)
     return sorted_list
 
