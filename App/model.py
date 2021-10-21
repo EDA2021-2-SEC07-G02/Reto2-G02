@@ -180,7 +180,8 @@ def addArtwork(catalog, artwork):
     if len(artwork["DateAcquired"])==10:
         addDateAcquired(catalog,artwork)
     
-    addDepartment(catalog,artwork)
+    index=lt.size(catalog["artworks"])
+    addDepartment(catalog,artwork,index)
 
     for consID in artwork["ConstituentID"].strip("[]").replace(" ","").split(","):
         listaIndices=mp.get(catalog["artists"],consID)["value"]["artwork_index_list"] # Req 3 y 6
@@ -276,20 +277,12 @@ def addNationality(catalog,artwork):
         nationalityMap["Total_obras"]+=1
     nacionalidadesObra=None #Se elimina lista provisional
 
-def addDepartment(catalog,artwork):
+def addDepartment(catalog,artwork,index):
     """
     Agregar info al mapa de departamentos del MOMA
     """
     departamento=artwork["Department"]
-    objectID=artwork["ObjectID"]
-    altura=artwork["Height (cm)"]
-    ancho=artwork["Width (cm)"]
-    peso=artwork["Weight (kg)"]
-    profundidad=artwork["Depth (cm)"]
-    fecha=artwork["Date"]
-    cualidadesObra={"ObjectID":objectID,"Height (cm)":altura,
-                    "Width (cm)":ancho, "Weight (kg)":peso,
-                    "Depth (cm)":profundidad,"Date":fecha}
+    cualidadesobra=index
     existDepartment=mp.contains(catalog["Department"],departamento)
     if existDepartment:
         entry=mp.get(catalog["Department"],departamento)
@@ -301,7 +294,7 @@ def addDepartment(catalog,artwork):
         departmentMap["Artworks"]=lt.newList("ARRAY_LIST")
         mp.put(catalog["Department"],departamento,departmentMap)
     
-    lt.addLast(departmentMap["Artworks"],cualidadesObra) #Se añade solamente el objectID, preguntar si es necesario añadir toda la obra de arte
+    lt.addLast(departmentMap["Artworks"],index) #Se añade solamente el index de la obra de arte
 
 
 # Funciones de consulta
@@ -612,9 +605,13 @@ def transportarObrasDespartamento(catalog,departamento): # Requerimiento Grupal 
     precioTotalEnvio=0
     pesoTotal=0
     exisDepartamento=mp.contains(catalog["Department"],departamento)
+    obrasArteDepto=lt.newList("ARRAY_LIST")
     if exisDepartamento:
-        obrasDepartamento=mp.get(catalog["Department"],departamento)["value"]["Artworks"]
-        for obra in lt.iterator(obrasDepartamento):
+        obrasDepartamento=mp.get(catalog["Department"],departamento)["value"]["Artworks"] #
+        for index in lt.iterator(obrasDepartamento):
+            obra=lt.getElement(catalog["artworks"],index)
+            obra["NombresArtistas"]=nombresArtistas(catalog,obra["ConstituentID"])
+            lt.addLast(obrasArteDepto,obra)
             altura=obra["Height (cm)"]
             ancho=obra["Width (cm)"]
             peso=obra["Weight (kg)"]
@@ -641,12 +638,12 @@ def transportarObrasDespartamento(catalog,departamento): # Requerimiento Grupal 
             obra["TransCost (USD)"]=precioEnvio
             precioTotalEnvio+=precioEnvio
     
-    size=obrasDepartamento["size"]
-    obrasDeptoCopy=lt.subList(obrasDepartamento,0,size) #se copia la lista 
+    size=obrasArteDepto["size"]
+    obrasDeptoCopy=lt.subList(obrasArteDepto,0,size) #se copia la lista 
     precioSorted=lt.subList((selection.sortEdit(obrasDeptoCopy,cmpArtworkByPrice,5)),1,5)
-    fechaSorted=lt.subList((selection.sortEdit(obrasDepartamento,cmpArtworkByDate,5)),1,5)#lista ordenada por fecha
-    respuestaLPrecio=listasRespuesta(precioSorted,catalog,"",requerimiento="req5",elementosTotal=5)
-    respuestaLFecha=listasRespuesta(fechaSorted,catalog,"",requerimiento="req5",elementosTotal=5)
+    fechaSorted=lt.subList((selection.sortEdit(obrasArteDepto,cmpArtworkByDate,5)),1,5)#lista ordenada por fecha
+    respuestaLPrecio=precioSorted#listasRespuesta(precioSorted,catalog,"",requerimiento="req5",elementosTotal=5)
+    respuestaLFecha=fechaSorted#listasRespuesta(fechaSorted,catalog,"",requerimiento="req5",elementosTotal=5)
     return precioTotalEnvio, pesoTotal,respuestaLFecha,respuestaLPrecio,size
 
 
